@@ -1,0 +1,8 @@
+{
+    "solidity.linter": "solhint",
+    "solidity.formatter": "forge",
+    "solidity.defaultCompiler": "remote",
+    "solidity.packageDefaultDependenciesDirectory": "lib",
+    "solidity.packageDefaultDependenciesContractsDirectory": "src"
+}
+  
