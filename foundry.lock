@@ -1,0 +1,17 @@
+{
+  "lib/forge-std": {
+    "rev": "bb8647a62b45ede74e0561887a495810776a752f"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "a1a0a67a2050f5b0edac2bb64ba679cb07a88943"
+  },
+  "lib/openzeppelin-contracts-upgradeable": {
+    "rev": "60b305a8f3ff0c7688f02ac470417b6bbf1c4d27"
+  },
+  "lib/openzeppelin-foundry-upgrades": {
+    "rev": "cbce1e00305e943aa1661d43f41e5ac72c662b07"
+  },
+  "lib/solmate": {
+    "rev": "89365b880c4f3c786bdd453d4b8e8fe410344a69"
+  }
+}

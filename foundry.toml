@@ -1,0 +1,81 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.30"
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
+optimizer_runs = 8_000
+
+[fmt]
+# Exclude test directories and files
+ignore = [
+    "test/**/*",
+    "script/**/*",  # Ignore script files
+    "**/*.s.sol",  # Ignore files ending with *.s.sol 
+    "**/*.t.sol",   # Ignore files ending with .t.sol
+    "**/mocks/**/*", # Optional: ignore mock files
+    "**/script/**"
+]
+
+# Readability settings
+bracket_spacing = true           # { } instead of {}
+int_types = "long"              # uint256 instead of uint (explicit is better)
+multiline_func_header = "all"   # Clean parameter formatting
+quote_style = "double"          # "string" instead of 'string' (matches Solidity docs)
+number_underscore = "thousands" # 1_000_000 instead of 1000000 (much more readable)
+
+# Line formatting
+line_length = 100
+tab_width = 4
+
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+[rpc_endpoints]
+avax_mainnet = "${AVALANCHE_MAINNET_RPC_URL}"
+avax_testnet = "${AVALANCHE_TESTNET_RPC_URL}"
+tac_mainnet = "${TAC_MAINNET_RPC_URL}"     
+tac_testnet = "${TAC_TESTNET_RPC_URL}"
+anvil = "${ANVIL_RPC_URL}"
+eth_mainnet = "${ETHEREUM_MAINNET_RPC_URL}"
+eth_testnet = "${ETHEREUM_TESTNET_RPC_URL}"
+bsc_mainnet = "${BSC_MAINNET_RPC_URL}"
+bsc_testnet = "${BSC_TESTNET_RPC_URL}"
+
+
+[etherscan]
+avax_mainnet = { key = "${ETHERSCAN_API_KEY}", url = "${ROUTE_SCAN_MAINNET_VERIFIER_URL}", chain=43114 }
+avax_testnet = { key = "${ETHERSCAN_API_KEY}", url = "${ROUTE_SCAN_TESTNET_VERIFIER_URL}", chain=43113 }
+eth_testnet = { key = "${ETHERSCAN_API_KEY}", url = "${ETHERSCAN_TESTNET_VERIFIER_URL}", chain=11155111 }
+eth_mainnet = { key = "${ETHERSCAN_API_KEY}", url = "${ETHERSCAN_MAINNET_VERIFIER_URL}", chain=1 }
+bsc_testnet = { key = "${ETHERSCAN_API_KEY}", url = "${ETHERSCAN_MAINNET_VERIFIER_URL}", chain=97 }
+bsc_mainnet = { key = "${ETHERSCAN_API_KEY}", url = "${ETHERSCAN_MAINNET_VERIFIER_URL}", chain=56 }
+# tac_mainnet = { key = "", url = "${TAC_MAINNET_VERIFIER_URL}", chain = 239 }   
+# tac_testnet = { key = "", url = "${TAC_TESTNET_VERIFIER_URL}", chain = 2390 } 
+
+
+[profile.env]
+# API Keys
+ETHERSCAN_API_KEY = "${ETHERSCAN_API_KEY}"
+
+# Avalanche
+AVALANCHE_MAINNET_RPC_URL = "${AVALANCHE_MAINNET_RPC_URL}"
+AVALANCHE_TESTNET_RPC_URL = "${AVALANCHE_TESTNET_RPC_URL}"
+
+# BSC
+BSC_MAINNET_RPC_URL = "${BSC_MAINNET_RPC_URL}"
+BSC_TESTNET_RPC_URL = "${BSC_TESTNET_RPC_URL}"
+
+# TAC
+TAC_MAINNET_VERIFIER_URL = "${TAC_MAINNET_VERIFIER_URL}"
+TAC_TESTNET_VERIFIER_URL = "${TAC_TESTNET_VERIFIER_URL}"
+
+# RouteScan (Avalanche verifier)
+ROUTE_SCAN_MAINNET_VERIFIER_URL = "${ROUTE_SCAN_MAINNET_VERIFIER_URL}"
+ROUTE_SCAN_TESTNET_VERIFIER_URL = "${ROUTE_SCAN_TESTNET_VERIFIER_URL}"
+
+# Local Anvil
+ANVIL_RPC_URL = "${ANVIL_RPC_URL}"
