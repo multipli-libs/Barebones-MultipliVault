@@ -5,6 +5,8 @@ Multipli is a Real World Asset (RWA) yield protocol that employs delta neutral s
 This repository contains the smart contract implementation for the Multipli Protocol, providing ERC-4626 compatible vault interfaces that integrate seamlessly with the broader DeFi ecosystem. The protocol is deployed using the [UUPS proxy pattern](https://docs.openzeppelin.com/contracts/4.x/api/proxy), which enables secure upgradability while maintaining a single contract address.
 
 > **Note:** This repository is a **stripped-down, deployment-focused subset** of the full Multipli Protocol codebase. Active development, experimentation, and internal tooling occur in a separate internal repository; only the contracts and components required for deployment, verification, and external review are included here.
+>
+> This repository contains the **V1 version** of the Multipli Protocol contracts. To review the **V2 version**, please refer to the [`v2` branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2).
 
 ## 1. Repository Structure
 
@@ -13,7 +15,7 @@ This repository contains the core smart contracts and deployment scripts for the
 ### 1.1 Versions
 
 - **V1 (v1 branch)**: Initial implementation featuring xUSDC vault on Avalanche C-Chain and Monad
-- **V2 (main branch)**: Enhanced version with multi-chain support and additional features - [View V2 Documentation](../../tree/v2)
+- **V2 (main branch)**: Enhanced version with multi-chain support and additional features - [View V2 Documentation](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2)
 
 ## 2. Local Setup
 
@@ -206,9 +208,16 @@ forge verify-contract \
   --watch
 ```
 
-## 4. Deployed Contracts (V1)
+## 4. Deployed Contracts
 
-### 4.1 Avalanche C-Chain (Mainnet)
+### 4.1 Deployed Contracts (V1)
+
+📌 **Source Code:**  
+[V1 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v1)
+
+---
+
+#### Avalanche C-Chain (Mainnet)
 
 The following contracts are deployed on Avalanche C-Chain:
 
@@ -219,16 +228,40 @@ The following contracts are deployed on Avalanche C-Chain:
 | **VariableVaultFee**      | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Handles fee calculations and configurations |
 | **RolesAuthority**        | [`0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609`](https://snowtrace.io/address/0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609) | Role-based access control system            |
 
-### 4.2 Monad (Mainnet)
+---
+
+#### Monad (Mainnet)
 
 The following contracts are deployed on Monad:
 
-| Contract                  | Address                                                                                                                  | Description                                 |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| **MultipliVault (xUSDC)** | [`0xd74FB32112b1eF5b4C428Fead8dA8d85A0019009`](https://monadscan.com/address/0xd74FB32112b1eF5b4C428Fead8dA8d85A0019009) | Core vault contract for USDC deposits       |
-| **VaultFundManager**      | [`0xE1824bF952bB2E8414d12de8A9fc2cBc666D6758`](https://monadscan.com/address/0xE1824bF952bB2E8414d12de8A9fc2cBc666D6758) | Manages fund movements and balance updates  |
-| **VariableVaultFee**      | [`0xA39986F96B80d04e8d7AeAaF47175F47C23FD0f4`](https://monadscan.com/address/0xA39986F96B80d04e8d7AeAaF47175F47C23FD0f4) | Handles fee calculations and configurations |
-| **RolesAuthority**        | [`0x2A66Bb2dA3AD1c854E79307F64b862DECD860D4c`](https://monadscan.com/address/0x2A66Bb2dA3AD1c854E79307F64b862DECD860D4c) | Role-based access control system            |
+| Contract                     | Address                                                                                                                  | Description                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| **MultipliVault (xUSDC)**    | [`0xd74FB32112b1eF5b4C428Fead8dA8d85A0019009`](https://monadscan.com/address/0xd74FB32112b1eF5b4C428Fead8dA8d85A0019009) | Core vault contract for USDC deposits       |
+| **VaultFundManager (xUSDC)** | [`0xE1824bF952bB2E8414d12de8A9fc2cBc666D6758`](https://monadscan.com/address/0xE1824bF952bB2E8414d12de8A9fc2cBc666D6758) | Manages fund movements and balance updates  |
+| **VariableVaultFee (xUSDC)** | [`0xA39986F96B80d04e8d7AeAaF47175F47C23FD0f4`](https://monadscan.com/address/0xA39986F96B80d04e8d7AeAaF47175F47C23FD0f4) | Handles fee calculations and configurations |
+| **RolesAuthority (xUSDC)**   | [`0x2A66Bb2dA3AD1c854E79307F64b862DECD860D4c`](https://monadscan.com/address/0x2A66Bb2dA3AD1c854E79307F64b862DECD860D4c) | Role-based access control system            |
+
+---
+
+### 4.2 Deployed Contracts (V2)
+
+**Source Code:**  
+[V2 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2)
+
+---
+
+#### Avalanche C-Chain (Mainnet)
+
+The following V2 contracts are deployed on Avalanche C-Chain:
+
+| Contract                     | Address                                                                                                                 | Description                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| **MultipliVault (xWBTC)**    | [`0x468BbabAEf852C134b584382C0fef83F2954Cd5c`](https://snowtrace.io/address/0x468BbabAEf852C134b584382C0fef83F2954Cd5c) | Core vault contract for WBTC deposits       |
+| **VaultFundManager (xWBTC)** | [`0x62c2181618833b202e68b5addc4279542978Ef47`](https://snowtrace.io/address/0x62c2181618833b202e68b5addc4279542978Ef47) | Manages fund movements and balance updates  |
+| **VariableVaultFee (xWBTC)** | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Handles fee calculations and configurations |
+| **RolesAuthority (xWBTC)**   | [`0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42`](https://snowtrace.io/address/0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42) | Role-based access control system            |
+
+---
 
 ## 5. Contract Overview
 
@@ -680,4 +713,4 @@ The backend system performs critical monitoring and maintenance tasks:
 
 ## 10. Version 2
 
-For enhanced features including multi-chain support and additional deployed vaults, please refer to the [V2 branch](../../tree/v2).
+For enhanced features including multi-chain support and additional deployed vaults, please refer to the [V2 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2).
