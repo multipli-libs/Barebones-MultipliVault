@@ -13,7 +13,7 @@ contract DeployXUSDCAvalancheMainnet is BaseDeployment {
         SHARE_SYMBOL = "xUSDC";
         INITIAL_LOCK_DEPOSIT_AMOUNT = 100e6; // 100 USDC
         MIN_DEPOSIT_AMOUNT = 10e6; // 10 USDC
-        MULTIPLI_FUND_MANAGER_WALLET =  "your_fund_manager_wallet";;
+        MULTIPLI_FUND_MANAGER_WALLET =  "your_fund_manager_wallet";
 
         console.log("Using mainnet configuration........");
     }
