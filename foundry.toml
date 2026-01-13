@@ -36,13 +36,13 @@ tab_width = 4
 [rpc_endpoints]
 avax_mainnet = "${AVALANCHE_MAINNET_RPC_URL}"
 avax_testnet = "${AVALANCHE_TESTNET_RPC_URL}"
-tac_mainnet = "${TAC_MAINNET_RPC_URL}"     
-tac_testnet = "${TAC_TESTNET_RPC_URL}"
+monad_testnet = "${MONAD_TESTNET_RPC_URL}"
+monad_mainnet = "${MONAD_MAINNET_RPC_URL}"
 anvil = "${ANVIL_RPC_URL}"
 
 
 [etherscan]
 avax_mainnet = { key = "${ETHERSCAN_API_KEY}", url = "${ROUTE_SCAN_MAINNET_VERIFIER_URL}", chain=43114 }
 avax_testnet = { key = "${ETHERSCAN_API_KEY}", url = "${ROUTE_SCAN_TESTNET_VERIFIER_URL}", chain=43113 }
-# tac_mainnet = { key = "", url = "${TAC_MAINNET_VERIFIER_URL}", chain = 239 }   
-# tac_testnet = { key = "", url = "${TAC_TESTNET_VERIFIER_URL}", chain = 2390 } 
+monad_testnet = { key = "", url = "${MONAD_TESTNET_VERIFIER_URL}", chain=10143 }
+monad_mainnet = { key = "${ETHERSCAN_API_KEY}", url = "${MONAD_MAINNET_VERIFIER_URL}", chain=143 }
