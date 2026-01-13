@@ -6,7 +6,7 @@ This repository contains the smart contract implementation for the Multipli Prot
 
 > **Note:** This repository is a **stripped-down, deployment-focused subset** of the full Multipli Protocol codebase. Active development, experimentation, and internal tooling occur in a separate internal repository; only the contracts and components required for deployment, verification, and external review are included here.
 >
-> This branch contains the **V1 version** of the Multipli Protocol contracts. To review the **V2 version**, please refer to the [`v2` branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2).
+> This branch contains the **V1 version** of the Multipli Protocol contracts. To review the **V2 version**, please refer to the [`v2` branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2). To determine whether a deployed contract uses V1 or V2, refer to the [Deployed Contracts](#4-deployed-contracts) section.
 
 ## 1. Repository Structure
 
