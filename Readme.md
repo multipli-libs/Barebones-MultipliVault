@@ -4,6 +4,8 @@ Multipli is a Real World Asset (RWA) yield protocol that employs delta neutral s
 
 This repository contains the smart contract implementation for the Multipli Protocol, providing ERC-4626 compatible vault interfaces that integrate seamlessly with the broader DeFi ecosystem. The protocol is deployed using the [UUPS proxy pattern](https://docs.openzeppelin.com/contracts/4.x/api/proxy), which enables secure upgradability while maintaining a single contract address.
 
+> **Note:** This repository is a **stripped-down, deployment-focused subset** of the full Multipli Protocol codebase. Active development, experimentation, and internal tooling occur in a separate internal repository; only the contracts and components required for deployment, verification, and external review are included here.
+
 ## 1. Repository Structure
 
 This repository contains the core smart contracts and deployment scripts for the Multipli Protocol.
@@ -40,11 +42,13 @@ This repository contains the core smart contracts and deployment scripts for the
 
 ```bash
    # Create wallets for different environments
-   cast wallet import avalanche-deployer --interactive      # For Avalanche mainnet deployment
-   cast wallet import monad-deployer --interactive          # For Monad mainnet deployment
-   cast wallet import avalanche-testnet-deployer --interactive  # For avalanche testnet deployment
-   cast wallet import monad-testnet-deployer --interactive  # For Monad testnet deployment
-   cast wallet import local-deployer --interactive          # For local testing
+   # Create wallets for different environments
+    cast wallet import <your_avalanche_mainnet_wallet> --interactive   # Avalanche mainnet deployment
+    cast wallet import <your_monad_mainnet_wallet> --interactive       # Monad mainnet deployment
+    cast wallet import <your_avalanche_testnet_wallet> --interactive   # Avalanche testnet deployment
+    cast wallet import <your_monad_testnet_wallet> --interactive       # Monad testnet deployment
+    cast wallet import <your_local_deployer_wallet> --interactive     # Local testing
+
 ```
 
 5. **Configure environment variables**
@@ -107,7 +111,7 @@ The repository includes deployment scripts for different networks in the `script
 ```bash
 forge script script/deployment/DeployXUSDCAvalancheMainnet.s.sol:DeployXUSDCAvalancheMainnet \
   --rpc-url avax_mainnet \
-  --account avalanche-deployer \
+  --account <your_avalanche_mainnet_wallet> \
   --sender <your_deployer_address> \
   --verify \
   --broadcast \
@@ -119,7 +123,7 @@ forge script script/deployment/DeployXUSDCAvalancheMainnet.s.sol:DeployXUSDCAval
 ```bash
 forge script script/deployment/DeployXUSDCMonadMainnet.s.sol:DeployXUSDCMonadMainnet \
   --rpc-url monad_mainnet \
-  --account monad-deployer \
+  --account <your_monad_mainnet_wallet> \
   --sender <your_deployer_address> \
   --verify \
   --broadcast \
@@ -131,7 +135,7 @@ forge script script/deployment/DeployXUSDCMonadMainnet.s.sol:DeployXUSDCMonadMai
 ```bash
 forge script script/deployment/DeployXUSDCAvalancheTestnet.s.sol:DeployXUSDCAvalancheTestnet \
   --rpc-url avax_testnet \
-  --account avalanche-testnet-deployer \
+  --account <your_avalanche_testnet_wallet> \
   --sender <your_deployer_address> \
   --verify \
   --broadcast \
@@ -143,7 +147,7 @@ forge script script/deployment/DeployXUSDCAvalancheTestnet.s.sol:DeployXUSDCAval
 ```bash
 forge script script/deployment/DeployXUSDCAvalancheTestnet.s.sol:DeployXUSDCAvalancheTestnet \
   --rpc-url avax_testnet \
-  --account monad-testnet-deployer \
+  --account <your_monad_testnet_wallet> \
   --sender <your_deployer_address> \
   --verify \
   --broadcast \
@@ -159,7 +163,7 @@ anvil
 # Then deploy
 forge script script/deployment/anvil/DeployXUSDCAnvil.s.sol:DeployXUSDCAnvil \
   --rpc-url localhost \
-  --account local-deployer \
+  --account <your_local_deployer_wallet> \
   --sender <your_deployer_address> \
   --broadcast \
   -vvvv
@@ -674,20 +678,6 @@ The backend system performs critical monitoring and maintenance tasks:
 
 7. **Fee Contract Management:** The fee contract can be set to `address(0)` if needed. The system emits `FeeContractUpdated` events whenever the fee contract is modified in MultipliVault.
 
-## 10. Operational Workflow
+## 10. Version 2
 
-- **Fund Sweeping**: Every 5 minutes, a worker checks if the USDC balance in the contract exceeds 10,000 USDC. If the balance crosses the threshold, funds are moved to exchange/strategy.
-
-- **Balance Updates**: Instead of updating the underlying balance in a single step, the protocol applies updates incrementally every 8 hours, resulting in 21 updates over a 7-day period. Each invocation of onUnderlyingBalanceUpdate applies a portion of the accumulated yield, distributing balance changes smoothly over time. This staggered update mechanism reduces sudden balance jumps and mitigates potential exploitation by malicious users that could otherwise take advantage of discrete, large balance updates.
-
-## 11. Developer TODO
-
-- [ ] Create admin user group in the deployment script. Assign permission to call `VaultFundManager.updateUserOperatorWhitelist`, `MultipliVault.pause` and `MultipliVault.unpause`. Wallets belonging to this group should be a multi-sig wallet/MPC wallet. Old owner should renounce ownership to a multi-sig/MPC owner wallet.
-- [ ] Implement bulk fulfillRedeem through VaultFundManager contract
-- [ ] Migrate to Hardhat for upgrade validation using [OpenZeppelin upgrade plugins](https://docs.openzeppelin.com/upgrades-plugins/)
-- [x] Remove console statements
-- [x] Review and update docstrings/comments across all contracts
-
-## 12. Version 2
-
-For enhanced features including multi-chain support and additional vault types, please refer to the [V2 branch](../../tree/v2).
+For enhanced features including multi-chain support and additional deployed vaults, please refer to the [V2 branch](../../tree/v2).
