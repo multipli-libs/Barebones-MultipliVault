@@ -17,12 +17,12 @@ contract DeployXUSDCMonadTestnet is BaseDeployment {
 
      function setDeploymentConfig() public override {
         // Create asset for testnet
-        OWNER = "your_deployer_address";
+        OWNER = address(0x123); //your_deployer_address
         ASSET = createUSDC(OWNER, 10_000e6);        
         SHARE_NAME = "xUSDC";
         SHARE_SYMBOL = "xUSDC";
         INITIAL_LOCK_DEPOSIT_AMOUNT = 100e6; // 100 USDC
         MIN_DEPOSIT_AMOUNT = 10e6; // 10 USDC
-        MULTIPLI_FUND_MANAGER_WALLET = "your_fund_manager_wallet";
+        MULTIPLI_FUND_MANAGER_WALLET = address(0x123); // your_fund_manager_wallet;
     }
 }
