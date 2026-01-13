@@ -18,13 +18,13 @@ contract DeployXBTCAvalancheTestnet is BaseWithSharedConfig {
 
      function setDeploymentConfig() public override {
         // Create asset for testnet
-        OWNER = 0x928786CD018d7615738dBA48462Be6B57384ddd4;
+        OWNER = address(0x123); //your_deployer_address
         ASSET = createBTC(OWNER, 10_000e6);        
         SHARE_NAME = "xBTC.b";
         SHARE_SYMBOL = "xBTC.b";
         INITIAL_LOCK_DEPOSIT_AMOUNT = 50000; // 0.0005 BTC
         MIN_DEPOSIT_AMOUNT = 7978; // 0.00007978 BTC => 10 USDC  // todo: need to be changed
-        MULTIPLI_FUND_MANAGER_WALLET = 0x928786CD018d7615738dBA48462Be6B57384ddd4;
-        VARIABLE_VAULT_FEE = 'your_deployed_xusdc_variable_vault_fee';
+        MULTIPLI_FUND_MANAGER_WALLET = address(0x123); //your_fund_manager_wallet
+        VARIABLE_VAULT_FEE = address(0x123); //your_deployed_xusdc_variable_vault_fee
     }
 }

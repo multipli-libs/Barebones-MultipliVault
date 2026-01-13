@@ -25,6 +25,6 @@ contract DeployXBTCAvalancheAnvil is BaseWithSharedConfig {
         INITIAL_LOCK_DEPOSIT_AMOUNT = 50000; // 0.0005 BTC
         MIN_DEPOSIT_AMOUNT = 7978; // 0.00007978 BTC => 10 USDC  
         MULTIPLI_FUND_MANAGER_WALLET = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-        VARIABLE_VAULT_FEE = 'your_deployed_xusdc_variable_vault_fee';
+        VARIABLE_VAULT_FEE = address(0x123); //your_deployed_xusdc_variable_vault_fee
     }
 }

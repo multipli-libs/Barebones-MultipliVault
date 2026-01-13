@@ -63,11 +63,57 @@ This repository contains the core smart contracts and deployment scripts for the
 # Build contracts
 forge build
 
-# Run tests with detailed output
+# Run tests with detailed output (For xUSDC on Avalanche Mainnet by default)
 forge clean && forge build && forge test -vvvv
+
+#Run test for a particular config
+forge clean && forge build && \
+NETWORK=[network] TOKEN=[token] ENV=[testnet|mainnet] forge test
+
+#Run tests for every config
+npm run test
 
 # Generate gas snapshots
 forge snapshot
+```
+
+#### 1.3.1 Test Combinations
+
+```bash
+COMBINATIONS=(
+"mainnet ethereum usdc"
+"testnet ethereum usdc"
+"mainnet ethereum wbtc"
+"testnet ethereum wbtc"
+"mainnet bsc usdc"
+"testnet bsc usdc"
+"mainnet bsc wbtc"
+"testnet bsc wbtc"
+"mainnet avalanche usdc"
+"testnet avalanche usdc"
+"testnet avalanche btc.b"
+"mainnet avalanche btc.b"
+)
+```
+
+#### 1.3.2 Folders to run the combinations
+
+```bash
+COMBO_FOLDERS=(
+  "test/unit/vault/*"
+  "test/unit/managers/*"
+  "test/unit/migrator/*"
+  "test/unit/fees/*"
+)
+```
+
+#### 1.3.3 Folder to run the test once
+
+```bash
+NON_CONFIG_FOLDERS=(
+
+  "test/unit/deployment/*"
+)
 ```
 
 ### 2.2 Help
@@ -289,14 +335,14 @@ The following contracts are deployed on Monad:
 
 The following V2 contracts are deployed on Avalanche C-Chain:
 
-| Contract                     | Address                                                                                                                 | Description                                      |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| **MultipliVault (xWBTC)**    | [`0x468BbabAEf852C134b584382C0fef83F2954Cd5c`](https://snowtrace.io/address/0x468BbabAEf852C134b584382C0fef83F2954Cd5c) | Core vault contract for WBTC deposits            |
-| **VaultFundManager (xWBTC)** | [`0x62c2181618833b202e68b5addc4279542978Ef47`](https://snowtrace.io/address/0x62c2181618833b202e68b5addc4279542978Ef47) | Manages fund movements and balance updates       |
-| **VariableVaultFee (xWBTC)** | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Shared with xUSDC - manages fees for both vaults |
-| **RolesAuthority (xWBTC)**   | [`0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42`](https://snowtrace.io/address/0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42) | Role-based access control system                 |
+| Contract                      | Address                                                                                                                 | Description                                      |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **MultipliVault (xBTC.B)**    | [`0x468BbabAEf852C134b584382C0fef83F2954Cd5c`](https://snowtrace.io/address/0x468BbabAEf852C134b584382C0fef83F2954Cd5c) | Core vault contract for BTC.b deposits           |
+| **VaultFundManager (xBTC.B)** | [`0x62c2181618833b202e68b5addc4279542978Ef47`](https://snowtrace.io/address/0x62c2181618833b202e68b5addc4279542978Ef47) | Manages fund movements and balance updates       |
+| **VariableVaultFee (xBTC.B)** | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Shared with xUSDC - manages fees for both vaults |
+| **RolesAuthority (xBTC.B)**   | [`0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42`](https://snowtrace.io/address/0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42) | Role-based access control system                 |
 
-> **Note:** xWBTC shares the `VariableVaultFee` contract with xUSDC for consistent fee management across vaults.
+> **Note:** xBTC.B shares the `VariableVaultFee` contract with xUSDC for consistent fee management across vaults.
 
 ---
 
