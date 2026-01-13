@@ -5,15 +5,15 @@ pragma solidity 0.8.30;
 import {Script, console} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {MockERC20} from "../../test/mocks/MockERC20.sol";
+import {MockERC20} from "../../../test/mocks/MockERC20.sol";
 import {Authority} from "@solmate/auth/Auth.sol";
 import {RolesAuthority} from "@solmate/auth/authorities/RolesAuthority.sol";
-import {MultipliVault} from "../../src/vault/MultipliVault.sol";
-import {VariableVaultFee} from "../../src/fees/VariableVaultFee.sol";
-import {IVariableVaultFee} from "../../src/interfaces/IVariableVaultFee.sol";
+import {MultipliVault} from "../../../src/vault/MultipliVault.sol";
+import {VariableVaultFee} from "../../../src/fees/VariableVaultFee.sol";
+import {IVariableVaultFee} from "../../../src/interfaces/IVariableVaultFee.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
-import {VaultFundManager} from "../../src/managers/VaultFundManager.sol";
-import {Role} from "../../src/common/Role.sol";
+import {VaultFundManager} from "../../../src/managers/VaultFundManager.sol";
+import {Role} from "../../../src/common/Role.sol";
 
 
 
