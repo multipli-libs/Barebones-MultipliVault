@@ -226,7 +226,7 @@ forge script script/deployment/DeployXBTCBAvalancheTestnet.s.sol:DeployXBTCBAval
   -vvvv
 ```
 
-#### 3.3.7 Local Deployment (Anvil)
+#### 3.3.4 Local Deployment (Anvil)
 
 ```bash
 # Start Anvil in a separate terminal first
