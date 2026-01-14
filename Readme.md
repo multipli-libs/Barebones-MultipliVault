@@ -15,7 +15,7 @@ This repository contains the core smart contracts and deployment scripts for the
 ### 1.1 Versions
 
 - **V1 (v1 branch)**: Initial implementation featuring xUSDC vault on Avalanche C-Chain and Monad - [View V1 Documentation](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v1)
-- **V2 (main branch)**: Enhanced version with multi-chain support and additional features.
+- **V2 (current branch)**: Enhanced version with multi-chain support and additional features.
 
 ## 2. Local Setup
 
@@ -414,7 +414,7 @@ Roles are defined in [Role.sol](./src/common/Role.sol)
    Administrative permissions for managing the protocol configuration and user permissions.
 
 4. **ETHEREUM_MIGRATOR_V1** _(V2 Feature - Not currently in use)_  
-   Reserved role for the `MultipliMigrator` contract. When deployed, addresses with this role can invoke critical vault operations including:
+   Reserved role for the [`MultipliMigrator`](#74-multiplimigrator-vault-migration-layer) contract. When deployed, addresses with this role can invoke critical vault operations including:
 
    - `onUnderlyingBalanceUpdate` - Updates the vault's view of underlying assets
    - `adminMint` - Allows admin to mint shares to a specified receiver
