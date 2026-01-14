@@ -174,8 +174,6 @@ The repository includes two types of deployment scripts:
 
 ### 3.3 Deployment Commands
 
-### 3.3 Deployment Commands
-
 > **Note:** The examples below follow Multipli's deployment pattern (xUSDC first using `Base.s.sol`, then xBTC.b using `BaseWithSharedConfig.s.sol`). You can deploy any vault first - just use the appropriate script type.
 
 #### 3.3.1 Avalanche Mainnet - xUSDC (First Vault)
