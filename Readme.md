@@ -14,8 +14,8 @@ This repository contains the core smart contracts and deployment scripts for the
 
 ### 1.1 Versions
 
-- **V1 (v1 branch)**: Initial implementation featuring xUSDC vault on Avalanche C-Chain and Monad
-- **V2 (main branch)**: Enhanced version with multi-chain support and additional features - [View V2 Documentation](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2)
+- **V1 (current branch)**: Initial implementation featuring xUSDC vault on Avalanche C-Chain and Monad
+- **V2 (v2 branch)**: Enhanced version with multi-chain support and additional features - [View V2 Documentation](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2)
 
 ## 2. Local Setup
 
