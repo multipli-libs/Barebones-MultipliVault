@@ -291,23 +291,35 @@ forge verify-contract \
 
 ## 4. Deployed Contracts
 
-### 4.1 Deployed Contracts (V1)
+### 4.1 Deployed Contracts (V2)
 
-📌 **Source Code:**  
-[V1 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v1)
+**Source Code:**  
+[V2 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2)
 
 ---
 
 #### Avalanche C-Chain (Mainnet)
 
-The following contracts are deployed on Avalanche C-Chain:
+The following V2 contracts are deployed on Avalanche C-Chain:
 
-| Contract                  | Address                                                                                                                 | Description                                 |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **MultipliVault (xUSDC)** | [`0xCF0Eb4ac018C06a16ED5c63484823C7805e7599D`](https://snowtrace.io/address/0xCF0Eb4ac018C06a16ED5c63484823C7805e7599D) | Core vault contract for USDC deposits       |
-| **VaultFundManager**      | [`0x01e676EAA0C9780A88395c651349Cf08Fe52368e`](https://snowtrace.io/address/0x01e676EAA0C9780A88395c651349Cf08Fe52368e) | Manages fund movements and balance updates  |
-| **VariableVaultFee**      | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Handles fee calculations and configurations |
-| **RolesAuthority**        | [`0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609`](https://snowtrace.io/address/0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609) | Role-based access control system            |
+| Contract                      | Address                                                                                                                 | Description                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| **MultipliVault (xUSDC)**     | [`0xCF0Eb4ac018C06a16ED5c63484823C7805e7599D`](https://snowtrace.io/address/0xCF0Eb4ac018C06a16ED5c63484823C7805e7599D) | Core vault contract for xUSDC deposits                    |
+| **VaultFundManager (xUSDC)**  | [`0x01e676EAA0C9780A88395c651349Cf08Fe52368e`](https://snowtrace.io/address/0x01e676EAA0C9780A88395c651349Cf08Fe52368e) | Manages fund movements and balance updates for xUSDC      |
+| **RolesAuthority (xUSDC)**    | [`0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609`](https://snowtrace.io/address/0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609) | Role-based access control system for xUSDC                |
+| **MultipliVault (xBTC.b)**    | [`0x468BbabAEf852C134b584382C0fef83F2954Cd5c`](https://snowtrace.io/address/0x468BbabAEf852C134b584382C0fef83F2954Cd5c) | Core vault contract for xBTC.b deposits                   |
+| **VaultFundManager (xBTC.b)** | [`0x62c2181618833b202e68b5addc4279542978Ef47`](https://snowtrace.io/address/0x62c2181618833b202e68b5addc4279542978Ef47) | Manages fund movements and balance updates for xBTC.b     |
+| **RolesAuthority (xBTC.b)**   | [`0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42`](https://snowtrace.io/address/0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42) | Role-based access control system for xBTC.b               |
+| **VariableVaultFee (Shared)** | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Handles fee calculations for both xUSDC and xBTC.b vaults |
+
+> **Note:** xBTC.B shares the `VariableVaultFee` contract with xUSDC for consistent fee management across vaults.
+
+---
+
+### 4.2 Deployed Contracts (V1)
+
+📌 **Source Code:**  
+[V1 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v1)
 
 ---
 
@@ -321,28 +333,6 @@ The following contracts are deployed on Monad:
 | **VaultFundManager (xUSDC)** | [`0xE1824bF952bB2E8414d12de8A9fc2cBc666D6758`](https://monadscan.com/address/0xE1824bF952bB2E8414d12de8A9fc2cBc666D6758) | Manages fund movements and balance updates  |
 | **VariableVaultFee (xUSDC)** | [`0xA39986F96B80d04e8d7AeAaF47175F47C23FD0f4`](https://monadscan.com/address/0xA39986F96B80d04e8d7AeAaF47175F47C23FD0f4) | Handles fee calculations and configurations |
 | **RolesAuthority (xUSDC)**   | [`0x2A66Bb2dA3AD1c854E79307F64b862DECD860D4c`](https://monadscan.com/address/0x2A66Bb2dA3AD1c854E79307F64b862DECD860D4c) | Role-based access control system            |
-
----
-
-### 4.2 Deployed Contracts (V2)
-
-**Source Code:**  
-[V2 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2)
-
----
-
-#### Avalanche C-Chain (Mainnet)
-
-The following V2 contracts are deployed on Avalanche C-Chain:
-
-| Contract                      | Address                                                                                                                 | Description                                      |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| **MultipliVault (xBTC.B)**    | [`0x468BbabAEf852C134b584382C0fef83F2954Cd5c`](https://snowtrace.io/address/0x468BbabAEf852C134b584382C0fef83F2954Cd5c) | Core vault contract for BTC.b deposits           |
-| **VaultFundManager (xBTC.B)** | [`0x62c2181618833b202e68b5addc4279542978Ef47`](https://snowtrace.io/address/0x62c2181618833b202e68b5addc4279542978Ef47) | Manages fund movements and balance updates       |
-| **VariableVaultFee (xBTC.B)** | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Shared with xUSDC - manages fees for both vaults |
-| **RolesAuthority (xBTC.B)**   | [`0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42`](https://snowtrace.io/address/0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42) | Role-based access control system                 |
-
-> **Note:** xBTC.B shares the `VariableVaultFee` contract with xUSDC for consistent fee management across vaults.
 
 ---
 
@@ -957,3 +947,7 @@ The backend system performs critical monitoring and maintenance tasks:
 6. **Safety Mechanisms:** If the percentage difference exceeds `maxPercentageChange` in `onUnderlyingBalanceUpdate`, the contract is automatically paused and alerts are triggered. Monitor for `Paused` events.
 
 7. **Fee Contract Management:** The fee contract can be set to `address(0)` if needed. The system emits `FeeContractUpdated` events whenever the fee contract is modified in MultipliVault.
+
+## 10. Version 1
+
+For the initial implementation with single vault deployment on a network, please refer to the [V1 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v1).
