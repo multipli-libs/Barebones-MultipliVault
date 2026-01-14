@@ -217,19 +217,6 @@ forge verify-contract \
 
 ---
 
-#### Avalanche C-Chain (Mainnet)
-
-The following contracts are deployed on Avalanche C-Chain:
-
-| Contract                  | Address                                                                                                                 | Description                                 |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **MultipliVault (xUSDC)** | [`0xCF0Eb4ac018C06a16ED5c63484823C7805e7599D`](https://snowtrace.io/address/0xCF0Eb4ac018C06a16ED5c63484823C7805e7599D) | Core vault contract for USDC deposits       |
-| **VaultFundManager**      | [`0x01e676EAA0C9780A88395c651349Cf08Fe52368e`](https://snowtrace.io/address/0x01e676EAA0C9780A88395c651349Cf08Fe52368e) | Manages fund movements and balance updates  |
-| **VariableVaultFee**      | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Handles fee calculations and configurations |
-| **RolesAuthority**        | [`0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609`](https://snowtrace.io/address/0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609) | Role-based access control system            |
-
----
-
 #### Monad (Mainnet)
 
 The following contracts are deployed on Monad:
@@ -254,12 +241,15 @@ The following contracts are deployed on Monad:
 
 The following V2 contracts are deployed on Avalanche C-Chain:
 
-| Contract                     | Address                                                                                                                 | Description                                 |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **MultipliVault (xWBTC)**    | [`0x468BbabAEf852C134b584382C0fef83F2954Cd5c`](https://snowtrace.io/address/0x468BbabAEf852C134b584382C0fef83F2954Cd5c) | Core vault contract for WBTC deposits       |
-| **VaultFundManager (xWBTC)** | [`0x62c2181618833b202e68b5addc4279542978Ef47`](https://snowtrace.io/address/0x62c2181618833b202e68b5addc4279542978Ef47) | Manages fund movements and balance updates  |
-| **VariableVaultFee (xWBTC)** | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Handles fee calculations and configurations |
-| **RolesAuthority (xWBTC)**   | [`0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42`](https://snowtrace.io/address/0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42) | Role-based access control system            |
+| Contract                      | Address                                                                                                                 | Description                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | --- |
+| **MultipliVault (xUSDC)**     | [`0xCF0Eb4ac018C06a16ED5c63484823C7805e7599D`](https://snowtrace.io/address/0xCF0Eb4ac018C06a16ED5c63484823C7805e7599D) | Core vault contract for xUSDC deposits                    |
+| **VaultFundManager (xUSDC)**  | [`0x01e676EAA0C9780A88395c651349Cf08Fe52368e`](https://snowtrace.io/address/0x01e676EAA0C9780A88395c651349Cf08Fe52368e) | Manages fund movements and balance updates for xUSDC      |
+| **RolesAuthority (xUSDC)**    | [`0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609`](https://snowtrace.io/address/0xf580B985e2Fd8A8b0e4a56C2a7E24bC28e872609) | Role-based access control system for xUSDC                |
+| **MultipliVault (xBTC.b)**    | [`0x468BbabAEf852C134b584382C0fef83F2954Cd5c`](https://snowtrace.io/address/0x468BbabAEf852C134b584382C0fef83F2954Cd5c) | Core vault contract for xBTC.b deposits                   |
+| **VaultFundManager (xBTC.b)** | [`0x62c2181618833b202e68b5addc4279542978Ef47`](https://snowtrace.io/address/0x62c2181618833b202e68b5addc4279542978Ef47) | Manages fund movements and balance updates for xBTC.b     |
+| **RolesAuthority (xBTC.b)**   | [`0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42`](https://snowtrace.io/address/0x2393D41EBc41270431Bdbdd3B3Ed03879636Ee42) | Role-based access control system for xBTC.b               |
+| **VariableVaultFee (Shared)** | [`0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72`](https://snowtrace.io/address/0x4E5FEa916ef8458b8D877BD760B6930Fb4f28B72) | Handles fee calculations for both xUSDC and xBTC.b vaults |     |
 
 ---
 
