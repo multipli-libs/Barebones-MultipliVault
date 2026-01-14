@@ -703,4 +703,4 @@ The backend system performs critical monitoring and maintenance tasks:
 
 ## 10. Version 2
 
-For enhanced features including multi-chain support and additional deployed vaults, please refer to the [V2 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2).
+For enhanced features including security fixes and support for multiple vaults on the same network, please refer to the [V2 branch](https://github.com/multipli-libs/Barebones-MultipliVault/tree/v2).
