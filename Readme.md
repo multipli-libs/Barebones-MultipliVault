@@ -406,7 +406,7 @@ Roles are defined in [Role.sol](./src/common/Role.sol)
    - `onUnderlyingBalanceUpdate` - Updates the vault's view of underlying assets
    - `removeFunds` - Withdraws assets from the vault
    - `fulfillRedeem` - Processes pending redemption requests
-   - `flashRedeem` - Flash redemption for unwinding leveraged positions (deprecated - see [Section 7.3](#73-flashredeem-deprecated))
+   - `flashRedeem` - Flash redemption for unwinding leveraged positions (not being used currently - see [Section 7.3](#73-flashredeem-not-in-use))
 
 3. **ADMIN_ROLE**  
    Administrative permissions for managing the protocol configuration and user permissions.
@@ -448,10 +448,10 @@ Unlike standard ERC-4626 vaults, Multipli uses an asynchronous redemption system
 
 **Preview Redemption** - Use `previewRedeem(shares)` to calculate the amount of USDC you'll receive for your xUSDC shares after fees.
 
-## 7.3 FlashRedeem (Deprecated)
+## 7.3 FlashRedeem (Not in use)
 
 > ** DEPRECATION NOTICE**  
-> **Current Status:** FlashRedeem is **deprecated** and **will not be used** going forward. All permissions have been revoked and the feature is no longer accessible even though the method exists on the deployed contract. This functionality will be removed in v3 version.
+> **Current Status:** FlashRedeem is **currently not being used**. All permissions have been revoked and while method exists on the deployed contract, this functionality will be deprecated in v3 version.
 
 ### 7.3.1 What is FlashRedeem?
 
