@@ -9,7 +9,7 @@ import {VariableVaultFee} from "../../../src/fees/VariableVaultFee.sol";
 import {RolesAuthority} from "@solmate/auth/authorities/RolesAuthority.sol";
 import {MultipliVault} from "../../../src/vault/MultipliVault.sol";
 import {VaultFundManager} from "../../../src/managers/VaultFundManager.sol";
-import {BaseDeployment} from "../../../script/deployment/Base.s.sol";
+import {BaseDeployment} from "../../../script/deployment/common/Base.s.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {MockERC20} from "../../../test/mocks/MockERC20.sol";
 import {Constants} from "../../utils/Constants.sol";
