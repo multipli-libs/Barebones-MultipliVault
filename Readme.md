@@ -406,7 +406,7 @@ Roles are defined in [Role.sol](./src/common/Role.sol)
    - `onUnderlyingBalanceUpdate` - Updates the vault's view of underlying assets
    - `removeFunds` - Withdraws assets from the vault
    - `fulfillRedeem` - Processes pending redemption requests
-   - `flashRedeem` - Flash redemption for unwinding leveraged positions
+   - `flashRedeem` - Flash redemption for unwinding leveraged positions (deprecated - see [Section 7.3](#73-flashredeem-deprecated))
 
 3. **ADMIN_ROLE**  
    Administrative permissions for managing the protocol configuration and user permissions.
@@ -448,7 +448,10 @@ Unlike standard ERC-4626 vaults, Multipli uses an asynchronous redemption system
 
 **Preview Redemption** - Use `previewRedeem(shares)` to calculate the amount of USDC you'll receive for your xUSDC shares after fees.
 
-## 7.3 FlashRedeem
+## 7.3 FlashRedeem (Deprecated)
+
+> **⚠️ DEPRECATION NOTICE**  
+> **Current Status:** FlashRedeem is **deprecated** and **out of scope for security audits**. All permissions have been revoked and the feature is no longer accessible in production. This functionality will be removed in future protocol versions.
 
 ### 7.3.1 What is FlashRedeem?
 
@@ -456,7 +459,7 @@ FlashRedeem is an advanced feature that allows authorized users to instantly con
 
 Think of it as a "flash loan in reverse" - instead of borrowing assets and paying them back, you receive assets upfront and pay them back with equivalent shares.
 
-### 7.3.2 Why Use FlashRedeem?
+### 7.3.2 Why was FlashRedeem used?
 
 **Traditional Problem**: If you have 1,000 xUSDC shares but 800 of them are locked as collateral on a lending platform, you can't easily redeem them because you don't have all the shares in your wallet.
 
