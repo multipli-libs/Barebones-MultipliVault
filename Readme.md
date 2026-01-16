@@ -361,7 +361,7 @@ Unlike standard ERC-4626 vaults, Multipli uses an asynchronous redemption system
 ## 7.3 FlashRedeem (Deprecated)
 
 > ** DEPRECATION NOTICE**  
-> **Current Status:** FlashRedeem is **deprecated** and **will not be used** going forward. All permissions have been revoked and the feature is no longer accessible in production even though the method exists on the contract. This functionality will be removed in v3 version.
+> **Current Status:** FlashRedeem is **deprecated** and **will not be used** going forward. All permissions have been revoked and the feature is no longer accessible even though the method exists on the deployed contract. This functionality will be removed in v3 version.
 
 ### 7.3.1 What is FlashRedeem?
 
