@@ -16,7 +16,7 @@ contract TestPause is BaseTest {
 
     function testPause__RevertsWhenCalledByNonAuthorizedUser() public {
         vm.stopPrank();
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.pause();
     }
 }

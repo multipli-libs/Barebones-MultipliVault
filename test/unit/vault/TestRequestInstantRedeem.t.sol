@@ -141,7 +141,7 @@ contract TestRequestInstantRedeem is BaseTest {
         vm.stopPrank();
         
         vm.startPrank({msgSender: users.alice});
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.requestInstantRedeem(aliceShares, users.alice, users.alice);
     }
 
@@ -154,7 +154,7 @@ contract TestRequestInstantRedeem is BaseTest {
         uint256 bobShares = depositVault.balanceOf(users.bob);
         
         // Bob should not be able to call instant redeem without curator role
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.requestInstantRedeem(bobShares, users.bob, users.bob);
     }
 
@@ -189,7 +189,7 @@ contract TestRequestInstantRedeem is BaseTest {
 
     function testRequestInstantRedeemRevertsOnZeroShares() public {
         vm.startPrank({msgSender: users.alice});
-        vm.expectRevert(abi.encodeWithSelector(Errors.SharesAmountZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__SharesAmountZero.selector));
         depositVault.requestInstantRedeem(0, users.alice, users.alice);
     }
 
@@ -200,13 +200,13 @@ contract TestRequestInstantRedeem is BaseTest {
         vm.stopPrank();
 
         vm.startPrank({msgSender: users.bob});
-        vm.expectRevert(abi.encodeWithSelector(Errors.NotSharesOwner.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__NotSharesOwner.selector));
         depositVault.requestInstantRedeem(aliceShares, users.alice, users.alice);
     }
 
     function testRequestInstantRedeemRevertsOnInsufficientShares() public {
         vm.startPrank({msgSender: users.alice});
-        vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientShares.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InsufficientShares.selector));
         depositVault.requestInstantRedeem(aliceShares + 1, users.alice, users.alice);
     }
 
@@ -350,7 +350,7 @@ contract TestRequestInstantRedeem is BaseTest {
         vm.startPrank({msgSender: users.bob});
         
         // Bob should not be able to redeem Alice's shares
-        vm.expectRevert(abi.encodeWithSelector(Errors.NotSharesOwner.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__NotSharesOwner.selector));
         depositVault.requestInstantRedeem(aliceShares, users.bob, users.alice);
     }
 

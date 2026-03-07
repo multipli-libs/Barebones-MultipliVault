@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity ^0.8.30;
 
 /**
  * @title Errors
@@ -7,7 +7,9 @@ pragma solidity 0.8.30;
  * @dev This library provides reusable error messages for share operations, authorization checks, and vault interactions.
  */
 library Errors {
-    //============================== GENERICS ===============================
+    /*//////////////////////////////////////////////////////////////
+                              GENERIC ERRORS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Thrown when an unauthorized method to a target is called.
@@ -15,104 +17,109 @@ library Errors {
      * @param target The target address.
      * @param functionSig The function signature being called.
      */
-    error TargetMethodNotAuthorized(address target, bytes4 functionSig);
+    error Errors__TargetMethodNotAuthorized(address target, bytes4 functionSig);
+
+    /**
+     * @notice Thrown when array lengths do not match in batch operations.
+     */
+    error Errors__ArrayLengthsMismatch();
 
     /**
      * @notice Thrown when insufficient shares balance is available to complete the operation.
      */
-    error InsufficientShares();
+    error Errors__InsufficientShares();
 
     /**
      * @notice Thrown when the operation is called by a user that is not the owner of the shares.
      */
-    error NotSharesOwner();
+    error Errors__NotSharesOwner();
 
     /**
      * @notice Thrown when the input shares amount is zero.
      */
-    error SharesAmountZero();
+    error Errors__SharesAmountZero();
 
     /**
      * @notice Thrown when a claim request is fulfilled with an invalid shares amount.
      */
-    error InvalidSharesAmount();
+    error Errors__InvalidSharesAmount();
 
     /**
      * @notice Thrown receiver is invalid.
      */
-    error InvalidReceiverAddress();
+    error Errors__InvalidReceiverAddress();
 
     /**
      * @notice Thrown receiver is invalid.
      */
-    error InvalidOperatorAddress();
+    error Errors__InvalidOperatorAddress();
 
     /**
      * @notice Thrown owner is invalid.
      */
-    error InvalidOwnerAddress();
+    error Errors__InvalidOwnerAddress();
 
     /**
      * @notice Thrown shares are not returned during flashRedeem
      */
-    error SharesNotReturned();
+    error Errors__SharesNotReturned();
 
     /**
      * @notice Thrown when the actual shares received is less than the minimum expected
      * @param actualShares The number of shares actually received
      * @param minShares The minimum number of shares expected
      */
-    error InsufficientSharesReceived(uint256 actualShares, uint256 minShares);
+    error Errors__InsufficientSharesReceived(uint256 actualShares, uint256 minShares);
 
     /**
      * @notice Thrown when the assets required exceeds the maximum the caller is willing to pay
      * @param actualAssets The number of assets actually required
      * @param maxAssets The maximum number of assets the caller is willing to pay
      */
-    error ExcessiveAssetsRequired(uint256 actualAssets, uint256 maxAssets);
+    error Errors__ExcessiveAssetsRequired(uint256 actualAssets, uint256 maxAssets);
 
     /**
      * @notice Thrown there is a mismatch in Total Supply
      */
-    error TotalSupplyMismatch();
+    error Errors__TotalSupplyMismatch();
 
     /**
      * @notice Thrown there is a asset balance mismatch in Vault
      */
-    error AssetBalanceMismatch();
+    error Errors__AssetBalanceMismatch();
 
     /**
      * @notice Thrown when a withdraw is attempted with an amount different than the claimable assets.
      */
-    error InvalidAssetsAmount();
+    error Errors__InvalidAssetsAmount();
 
     /**
      * @notice Thrown when the new max percentage is greater than the current max percentage.
      */
-    error InvalidMaxPercentage();
+    error Errors__InvalidMaxPercentage();
 
     /**
      * @notice Thrown when the new fee is greater than the max allowed fee.
      */
-    error InvalidFee();
+    error Errors__InvalidFee();
 
     /**
      * @notice Thrown when the underlying balance has already been updated in the current block.
      */
-    error UpdateAlreadyCompletedInThisBlock();
+    error Errors__UpdateAlreadyCompletedInThisBlock();
 
     /**
      * @notice Thrown when redeem() or withdraw() is called.
      */
-    error UseRequestRedeem();
+    error Errors__UseRequestRedeem();
 
     /**
      * @notice Thrown when deposit / mint is with assets < minimum deposit amount
      */
-    error DepositAmountLessThanThreshold(uint256 amount, uint256 minDepositAmount);
+    error Errors__DepositAmountLessThanThreshold(uint256 amount, uint256 minDepositAmount);
 
     /**
      * @notice Thrown when deposit / mint is with assets < minimum deposit amount
      */
-    error UnsupportedRedeemType(uint8 redeemType);
+    error Errors__UnsupportedRedeemType(uint8 redeemType);
 }

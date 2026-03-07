@@ -213,28 +213,28 @@ contract TestSetFeeContract is BaseTest {
 
     function test_setFeeContract_RevertsWhen_UnauthorizedUser() public {
         vm.startPrank(unauthorizedUser);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.setFeeContract(secondaryFeeContract);
         vm.stopPrank();
     }
 
     function test_setFeeContract_RevertsWhen_Alice() public {
         vm.startPrank(alice);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.setFeeContract(secondaryFeeContract);
         vm.stopPrank();
     }
 
     function test_setFeeContract_RevertsWhen_Bob() public {
         vm.startPrank(bob);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.setFeeContract(secondaryFeeContract);
         vm.stopPrank();
     }
 
     function test_setFeeContract_RevertsWhen_Charlie() public {
         vm.startPrank(charlie);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.setFeeContract(secondaryFeeContract);
         vm.stopPrank();
     }

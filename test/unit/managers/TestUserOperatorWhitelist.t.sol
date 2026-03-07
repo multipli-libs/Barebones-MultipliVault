@@ -74,7 +74,7 @@ contract TestUserOperatorWhitelist is BaseTest {
     }
 
     function test_revertsWhitelistIfNotCalledByVault() public {
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.updateUserOperatorWhitelist(operatorOwner, address(operator), true);
     }
 
@@ -85,7 +85,7 @@ contract TestUserOperatorWhitelist is BaseTest {
             fundManager.updateUserOperatorWhitelist.selector, address(0), address(operator), true
         );
 
-        vm.expectRevert(VaultFundManager.ZeroAddress.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAddress.selector);
         depositVault.manage(address(fundManager), data, 0);
         vm.stopPrank();
     }
@@ -96,7 +96,7 @@ contract TestUserOperatorWhitelist is BaseTest {
             fundManager.updateUserOperatorWhitelist.selector, operatorOwner, address(0), true
         );
 
-        vm.expectRevert(VaultFundManager.ZeroAddress.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAddress.selector);
         depositVault.manage(address(fundManager), data, 0);
         vm.stopPrank();
     }
@@ -142,7 +142,7 @@ contract TestUserOperatorWhitelist is BaseTest {
         );
 
         // Expect revert because `badUser` does not have permission to call manage on the vault
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.manage(address(fundManager), data, 0);
         vm.stopPrank();
     }

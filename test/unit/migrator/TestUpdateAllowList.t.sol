@@ -16,7 +16,7 @@ contract TestUpdateAllowList is MigratorBaseTest {
 
     function test__updateAllowList__Reverts__InvalidAddress() public {
         vm.startPrank(users.admin);
-        vm.expectRevert(MultipliMigrator.InvalidAddress.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__InvalidAddress.selector);
         migrator.updateAllowList(address(0), true);
         vm.stopPrank();
     }

@@ -38,7 +38,7 @@ contract TestRequestRedeem is BaseTest {
         uint256 aliceShares = depositVault.balanceOf(users.alice);
         assertTrue(aliceShares == amount, "Alice shares is not the amount");
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.SharesAmountZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__SharesAmountZero.selector));
         depositVault.requestRedeem(0, users.alice, users.alice);
     }
 
@@ -46,7 +46,7 @@ contract TestRequestRedeem is BaseTest {
         uint256 aliceShares = depositVault.balanceOf(users.alice);
         assertTrue(aliceShares == amount, "Alice shares is not the amount");
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.NotSharesOwner.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__NotSharesOwner.selector));
         depositVault.requestRedeem(aliceShares, users.alice, users.bob);
     }
 
@@ -54,7 +54,7 @@ contract TestRequestRedeem is BaseTest {
         uint256 aliceShares = depositVault.balanceOf(users.alice);
         assertTrue(aliceShares == amount, "Alice shares is not the amount");
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientShares.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InsufficientShares.selector));
         depositVault.requestRedeem(aliceShares + 1, users.alice, users.alice);
     }
 }

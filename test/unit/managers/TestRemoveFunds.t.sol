@@ -24,7 +24,7 @@ contract TestRemoveFunds is VaultFundManagerBase {
 
     function test_RemoveFunds_RevertsWhenNotCalledByVault() public {
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.removeFunds(recipient1, TEST_TRANSFER_AMOUNT);
     }
 
@@ -36,7 +36,7 @@ contract TestRemoveFunds is VaultFundManagerBase {
         );
 
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.ZeroAddress.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAddress.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -48,7 +48,7 @@ contract TestRemoveFunds is VaultFundManagerBase {
         );
 
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.ZeroAmount.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAmount.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -63,7 +63,7 @@ contract TestRemoveFunds is VaultFundManagerBase {
         );
 
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.InsufficientBalance.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__InsufficientBalance.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -80,7 +80,7 @@ contract TestRemoveFunds is VaultFundManagerBase {
 
         vm.startPrank(users.alice);
         // TargetMethodNotAuthorized(0xefdD6592Dec5675679D3808C02c82F97c5B9F809, 0x50d6368c)
-        vm.expectRevert(abi.encodeWithSignature("TargetMethodNotAuthorized(address,bytes4)", address(fundManager), bytes4(fundManager.removeFunds.selector)));
+        vm.expectRevert(abi.encodeWithSignature("Errors__TargetMethodNotAuthorized(address,bytes4)", address(fundManager), bytes4(fundManager.removeFunds.selector)));
         vault.manage(address(fundManager), data, 0);
 
         // Check balances
@@ -100,7 +100,7 @@ contract TestRemoveFunds is VaultFundManagerBase {
         );
 
         vm.startPrank(users.bob);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         vault.manage(address(fundManager), data, 0);
 
         // Check balances

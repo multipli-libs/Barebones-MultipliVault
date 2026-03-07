@@ -53,7 +53,7 @@ contract TestUpdateAssetFeeConfig is FeeBase {
         });
 
         vm.startPrank(naruto);
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.updateAssetFeeConfig(address(0), config);
         vm.stopPrank();
     }
@@ -71,7 +71,7 @@ contract TestUpdateAssetFeeConfig is FeeBase {
         feeContract.deregisterAsset(address(token));
 
         vm.startPrank(naruto);
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.updateAssetFeeConfig(address(token), config);
         vm.stopPrank();
     }
@@ -90,7 +90,7 @@ contract TestUpdateAssetFeeConfig is FeeBase {
             });
 
         vm.startPrank(naruto);
-        vm.expectRevert(IVariableVaultFee.InvalidAssetConfig.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAssetConfig.selector);
         feeContract.updateAssetFeeConfig(address(token), invalidConfig);
         vm.stopPrank();
     }
@@ -111,7 +111,7 @@ contract TestUpdateAssetFeeConfig is FeeBase {
         });
 
         vm.startPrank(naruto);
-        vm.expectRevert(IVariableVaultFee.InvalidAssetConfig.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAssetConfig.selector);
         feeContract.updateAssetFeeConfig(address(token), invalidConfig);
         vm.stopPrank();
     }

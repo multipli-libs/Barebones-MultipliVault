@@ -28,7 +28,7 @@ contract TestDeposit is BaseTest {
         vm.startPrank(users.alice);
 
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.DepositAmountLessThanThreshold.selector, amount, minDepositAmount)
+            abi.encodeWithSelector(Errors.Errors__DepositAmountLessThanThreshold.selector, amount, minDepositAmount)
         );
         depositVault.deposit(amount, users.alice);
 

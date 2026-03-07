@@ -66,10 +66,10 @@ contract TestCancelRedeem is BaseTest {
 
         vm.startPrank({msgSender: users.admin});
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSharesAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidSharesAmount.selector));
         depositVault.cancelRedeem(users.alice, pendingShares + 1, pendingAssets);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAssetsAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidAssetsAmount.selector));
         depositVault.cancelRedeem(users.alice, pendingShares, pendingAssets + 1);
     }
 
@@ -79,7 +79,7 @@ contract TestCancelRedeem is BaseTest {
         vm.startPrank({msgSender: users.admin});
         depositVault.cancelRedeem(users.alice, pendingShares, pendingAssets);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSharesAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidSharesAmount.selector));
         depositVault.cancelRedeem(users.alice, pendingShares, pendingAssets);
     }
 }

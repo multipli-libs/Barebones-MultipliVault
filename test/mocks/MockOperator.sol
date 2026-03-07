@@ -54,7 +54,7 @@ contract MockOperator is _BaseMockOperator {
         bytes memory _additionalData
     ) external override {
         if (IERC20(_asset).balanceOf(address(this)) < _shares) {
-            revert Errors.InsufficientShares();
+            revert Errors.Errors__InsufficientShares();
         }
         
         // transfer the shares back to the vault

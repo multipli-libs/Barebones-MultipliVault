@@ -41,7 +41,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
         uint256 assetsWithFee = vault.previewRedeem(shares);
 
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.addFundsAndFulfillRedeem(users.alice, shares, assetsWithFee);
     }
 
@@ -53,7 +53,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.addFundsAndFulfillRedeem.selector, address(0), shares, assetsWithFee);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(VaultFundManager.ZeroAddress.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAddress.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -64,7 +64,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.addFundsAndFulfillRedeem.selector, users.alice, 0, assetsWithFee);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(VaultFundManager.ZeroAmount.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAmount.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -75,7 +75,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.addFundsAndFulfillRedeem.selector, users.alice, shares, 0);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(VaultFundManager.ZeroAmount.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAmount.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -88,7 +88,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.addFundsAndFulfillRedeem.selector, users.alice, shares, excessiveAmount);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(VaultFundManager.InsufficientBalance.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__InsufficientBalance.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -101,7 +101,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.addFundsAndFulfillRedeem.selector, users.bob, shares, assetsWithOutFee);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSharesAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidSharesAmount.selector));
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -296,7 +296,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
         );
 
         vm.startPrank(users.alice);
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSharesAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidSharesAmount.selector));
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -314,7 +314,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.addFundsAndFulfillRedeem.selector, users.bob, shares, excessiveAssets);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAssetsAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidAssetsAmount.selector));
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -374,7 +374,7 @@ contract TestAddFundsAndFulfillRedeem is VaultFundManagerBase {
         vm.startPrank(users.alice); // Alice is also fund manager
 
         // This should revert because the redemption request is for Alice, not Bob
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSharesAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidSharesAmount.selector));
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -542,7 +542,7 @@ contract TestAddFundsAndFulfillRedeemDifferentSetup01 is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.addFundsAndFulfillRedeem.selector, users.alice, shares, assetsWithFee);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(abi.encodeWithSignature("InsufficientAggregateUnderlyingBalance()"));
+        vm.expectRevert(abi.encodeWithSignature("VaultFundManager__InsufficientAggregateUnderlyingBalance()"));
         vault.manage(address(fundManager), data, 0);
 
     }

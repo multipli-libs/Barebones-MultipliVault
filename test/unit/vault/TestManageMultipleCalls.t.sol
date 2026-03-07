@@ -42,7 +42,7 @@ contract TestManageMultipleCalls is BaseTest {
 
     function testManageMultipleCall__RevertsOnUnauthorizedUser() public {
         vm.startPrank({msgSender: users.bob}); // Stop acting as the owner
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         _manage();
     }
 
@@ -55,7 +55,7 @@ contract TestManageMultipleCalls is BaseTest {
         }
 
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.TargetMethodNotAuthorized.selector, mockTargets[0], targetfunctionSig)
+            abi.encodeWithSelector(Errors.Errors__TargetMethodNotAuthorized.selector, mockTargets[0], targetfunctionSig)
         );
         _manage();
     }
@@ -65,19 +65,19 @@ contract TestManageMultipleCalls is BaseTest {
 
         bytes[] memory datas = new bytes[](mockTargets.length + 1);
         uint256[] memory values = new uint256[](mockTargets.length);
-        vm.expectRevert("Array lengths must match");
+        vm.expectRevert(abi.encodeWithSignature("Errors__ArrayLengthsMismatch()"));
         // depositVault.manage(mockTargets, datas, values);
         _manage(mockTargets, datas, values);
 
         bytes[] memory datas1 = new bytes[](mockTargets.length);
         uint256[] memory values1 = new uint256[](mockTargets.length + 1);
-        vm.expectRevert("Array lengths must match");
+        vm.expectRevert(abi.encodeWithSignature("Errors__ArrayLengthsMismatch()"));
         depositVault.manage(mockTargets, datas1, values1);
 
         address[] memory targets2;
         bytes[] memory datas2 = new bytes[](4);
         uint256[] memory values2 = new uint256[](4);
-        vm.expectRevert("Array lengths must match");
+        vm.expectRevert(abi.encodeWithSignature("Errors__ArrayLengthsMismatch()"));
         depositVault.manage(targets2, datas2, values2);
     }
 

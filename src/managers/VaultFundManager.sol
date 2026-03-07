@@ -6,7 +6,6 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { console } from "forge-std/console.sol";
 
 /**
  * @title VaultFundManager
@@ -25,12 +24,16 @@ import { console } from "forge-std/console.sol";
  *      which means they must go through the vault's `manage` function with proper authorization.
  *        Exception: `flashRedeem()`. For flashRedeem, the user and operator has to be added
  *        to the allowlist (`whitelistedUserOperator`)
+ *
+ * @custom:security-contact security@multipli.com
  */
 contract VaultFundManager is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Math for uint256;
 
-    //============================== Structs ===============================
+    /*//////////////////////////////////////////////////////////////
+                           TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Structure to capture vault state for validation
@@ -51,33 +54,25 @@ contract VaultFundManager is ReentrancyGuard {
         uint256 aggregatedUnderlyingBalances;
     }
 
-    //============================== ERRORS ===============================
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
 
-    /// @notice Thrown when an unauthorized address attempts to call a function
-    error UnauthorizedCaller();
+    /// @notice The vault contract this manager is associated with
+    MultipliVault public immutable vault;
 
-    /// @notice Thrown when the requested amount exceeds available balance
-    error InsufficientBalance();
+    /// @notice The underlying asset managed by the vault
+    address public immutable asset;
 
-    /// @notice Thrown when the requested amount exceeds available balance
-    error InsufficientAggregateUnderlyingBalance();
+    /// @notice The mapping specifies if an address is a user is associated with an operator
+    mapping(address user => mapping(address operator => bool enabled)) public
+        whitelistedUserOperator;
 
-    /// @notice Thrown when total assets don't match before and after an operation
-    error TotalAssetsMismatch();
+    uint256 internal constant DENOMINATOR = 1e18;
 
-    /// @notice Thrown when total assets don't match before and after an operation
-    error TotalSupplyMismatch();
-
-    /// @notice Thrown when expected aggregatedBalances does not match with current aggregatedBalances
-    error AggregatedBalanceMismatch();
-
-    /// @notice Thrown when a zero address is provided where it's not allowed
-    error ZeroAddress();
-
-    /// @notice Thrown when a zero amount is provided where it's not allowed
-    error ZeroAmount();
-
-    //============================== EVENTS ===============================
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Emitted when funds are removed from the vault
@@ -148,37 +143,61 @@ contract VaultFundManager is ReentrancyGuard {
      */
     event RemoveFundsNative(address indexed to, uint256 amount);
 
-    //============================== STATE VARIABLES ===============================
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
 
-    /// @notice The vault contract this manager is associated with
-    MultipliVault public immutable vault;
+    /// @notice Thrown when an unauthorized address attempts to call a function
+    error VaultFundManager__UnauthorizedCaller();
 
-    /// @notice The underlying asset managed by the vault
-    address public immutable asset;
+    /// @notice Thrown when the requested amount exceeds available balance
+    error VaultFundManager__InsufficientBalance();
 
-    /// @notice The mapping specifies if an address is a user is associated with an operator
-    mapping(address user => mapping(address operator => bool enabled)) public
-        whitelistedUserOperator;
+    /// @notice Thrown when the requested amount exceeds available balance
+    error VaultFundManager__InsufficientAggregateUnderlyingBalance();
 
-    uint256 internal constant DENOMINATOR = 1e18;
+    /// @notice Thrown when total assets don't match before and after an operation
+    error VaultFundManager__TotalAssetsMismatch();
 
-    //============================== CONSTRUCTOR ===============================
+    /// @notice Thrown when total assets don't match before and after an operation
+    error VaultFundManager__TotalSupplyMismatch();
 
-    /**
-     * @notice Initializes the VaultFundManager with the specified vault
-     * @param _vaultAddr The address of the MultipliVault contract
-     * @dev The vault address cannot be zero and must be a valid MultipliVault contract
-     */
-    constructor(address payable _vaultAddr) {
-        if (_vaultAddr == address(0)) {
-            revert ZeroAddress();
-        }
+    /// @notice Thrown when expected aggregatedBalances does not match with current aggregatedBalances
+    error VaultFundManager__AggregatedBalanceMismatch();
 
-        vault = MultipliVault(_vaultAddr);
-        asset = vault.asset();
-    }
+    /// @notice Thrown when a zero address is provided where it's not allowed
+    error VaultFundManager__ZeroAddress();
 
-    //============================== MODIFIERS ===============================
+    /// @notice Thrown when a zero amount is provided where it's not allowed
+    error VaultFundManager__ZeroAmount();
+
+    /// @notice Thrown when the aggregate balance invariant is violated
+    error VaultFundManager__InvalidCurrentAggregateBalance();
+
+    /// @notice Thrown when a native transfer fails
+    error VaultFundManager__TransferFailed();
+
+    /// @notice Thrown when lastPricePerShare slippage exceeds threshold after flash redemption
+    error VaultFundManager__LastPricePerShareSlippageExceeded();
+
+    /// @notice Thrown when priceOfOneShare slippage exceeds threshold after flash redemption
+    error VaultFundManager__PriceOfOneShareSlippageExceeded();
+
+    /// @notice Thrown when total assets are less than expected after flash redemption
+    error VaultFundManager__TotalAssetsLessThanExpected();
+
+    /// @notice Thrown when total supply is less than expected after flash redemption
+    error VaultFundManager__TotalSupplyLessThanExpected();
+
+    /// @notice Thrown when asset balance mismatches after flash redemption
+    error VaultFundManager__AssetBalanceMismatch();
+
+    /// @notice Thrown when underlying balance doesn't match expected after flash redemption
+    error VaultFundManager__UnderlyingBalanceMismatch();
+
+    /*//////////////////////////////////////////////////////////////
+                               MODIFIERS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Ensures the function is called only through the vault's manage function
@@ -186,7 +205,7 @@ contract VaultFundManager is ReentrancyGuard {
      */
     modifier onlyVault() {
         if (msg.sender != address(vault)) {
-            revert UnauthorizedCaller();
+            revert VaultFundManager__UnauthorizedCaller();
         }
         _;
     }
@@ -199,12 +218,32 @@ contract VaultFundManager is ReentrancyGuard {
      */
     modifier isWhitelisted(address user, address operator) {
         if (!whitelistedUserOperator[user][operator]) {
-            revert UnauthorizedCaller();
+            revert VaultFundManager__UnauthorizedCaller();
         }
         _;
     }
 
-    //============================== EXTERNAL FUNCTIONS ===============================
+    /*//////////////////////////////////////////////////////////////
+                              CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Initializes the VaultFundManager with the specified vault
+     * @param _vaultAddr The address of the MultipliVault contract
+     * @dev The vault address cannot be zero and must be a valid MultipliVault contract
+     */
+    constructor(address payable _vaultAddr) {
+        if (_vaultAddr == address(0)) {
+            revert VaultFundManager__ZeroAddress();
+        }
+
+        vault = MultipliVault(_vaultAddr);
+        asset = vault.asset();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                  USER-FACING STATE-CHANGING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Updates the whitelist status for a user-operator combination
@@ -223,7 +262,7 @@ contract VaultFundManager is ReentrancyGuard {
         onlyVault
     {
         if (user == address(0) || operator == address(0)) {
-            revert ZeroAddress();
+            revert VaultFundManager__ZeroAddress();
         }
 
         whitelistedUserOperator[user][operator] = enable;
@@ -260,17 +299,11 @@ contract VaultFundManager is ReentrancyGuard {
         nonReentrant
         onlyVault
     {
-        if (recipient == address(0)) {
-            revert ZeroAddress();
-        }
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
+        if (recipient == address(0)) revert VaultFundManager__ZeroAddress();
+        if (amount == 0) revert VaultFundManager__ZeroAmount();
 
         uint256 balance = IERC20(asset).balanceOf(address(vault));
-        if (amount > balance) {
-            revert InsufficientBalance();
-        }
+        if (amount > balance) revert VaultFundManager__InsufficientBalance();
 
         uint256 oldAggregatedUnderlyingBalances = vault.aggregatedUnderlyingBalances();
         uint256 oldTotalAssetsValue = vault.totalAssets();
@@ -282,14 +315,10 @@ contract VaultFundManager is ReentrancyGuard {
         vault.onUnderlyingBalanceUpdate(newAggregatedBalance);
 
         // Verify total assets remain unchanged
-        if (oldTotalAssetsValue != vault.totalAssets()) {
-            revert TotalAssetsMismatch();
-        }
+        if (oldTotalAssetsValue != vault.totalAssets()) revert VaultFundManager__TotalAssetsMismatch();
 
         // sanity check: total number of shares must remain unchanged
-        if (oldTotalSupplyValue != vault.totalSupply()) {
-            revert TotalSupplyMismatch();
-        }
+        if (oldTotalSupplyValue != vault.totalSupply()) revert VaultFundManager__TotalSupplyMismatch();
 
         emit FundsRemovedFromVault(recipient, amount, newAggregatedBalance);
     }
@@ -300,9 +329,10 @@ contract VaultFundManager is ReentrancyGuard {
      *      held in external strategies. The newAggregatedBalance should include both
      *      principal and any yield generated.
      *
+     * @param oldAggregatedBalance The expected current balance (for safety check)
      * @param newAggregatedBalance The new total balance across all external strategies (principal + yield)
      *
-     * @custom:throws ZeroAmount if newAggregatedBalance is 0 and there should be underlying balances
+     * @custom:throws AggregatedBalanceMismatch if current balance doesn't match expected
      *
      * Requirements:
      * - Can only be called through vault's manage function
@@ -317,9 +347,7 @@ contract VaultFundManager is ReentrancyGuard {
         onlyVault
     {
         uint256 oldBalance = vault.aggregatedUnderlyingBalances();
-        if (oldBalance != oldAggregatedBalance) {
-            revert AggregatedBalanceMismatch();
-        }
+        if (oldBalance != oldAggregatedBalance) revert VaultFundManager__AggregatedBalanceMismatch();
 
         vault.onUnderlyingBalanceUpdate(newAggregatedBalance);
 
@@ -335,8 +363,8 @@ contract VaultFundManager is ReentrancyGuard {
      *
      *      The operation flow:
      *      1. Transfer assets from this contract to the vault
-     *      2. Update aggregated balance to reflect the asset movement from external strategies
-     *      3. Fulfill the redemption request
+     *      2. Fulfill the redemption request
+     *      3. Update aggregated balance to reflect the asset movement from external strategies
      *
      *      This maintains the share price consistency throughout the operation.
      *
@@ -363,22 +391,15 @@ contract VaultFundManager is ReentrancyGuard {
         nonReentrant
         onlyVault
     {
-        if (receiver == address(0)) {
-            revert ZeroAddress();
-        }
-        if (shares == 0 || assetsWithFee == 0) {
-            revert ZeroAmount();
-        }
+        if (receiver == address(0)) revert VaultFundManager__ZeroAddress();
+        if (shares == 0 || assetsWithFee == 0) revert VaultFundManager__ZeroAmount();
 
         uint256 contractBalance = IERC20(asset).balanceOf(address(this));
-        if (assetsWithFee > contractBalance) {
-            revert InsufficientBalance();
-        }
+        if (assetsWithFee > contractBalance) revert VaultFundManager__InsufficientBalance();
 
         uint256 oldAggregatedUnderlyingBalances = vault.aggregatedUnderlyingBalances();
-
         if (assetsWithFee > oldAggregatedUnderlyingBalances) {
-            revert InsufficientAggregateUnderlyingBalance();
+            revert VaultFundManager__InsufficientAggregateUnderlyingBalance();
         }
 
         // Step 1: Transfer the required assets from this contract to the vault
@@ -435,30 +456,26 @@ contract VaultFundManager is ReentrancyGuard {
 
         address initiator = msg.sender;
 
-        if (operator == address(0)) {
-            revert ZeroAddress();
-        }
+        if (operator == address(0)) revert VaultFundManager__ZeroAddress();
 
         uint256 assetsWithFee = vault.convertToAssets(shares);
-        if (shares == 0 || assetsWithFee == 0) {
-            revert ZeroAmount();
-        }
+        if (shares == 0 || assetsWithFee == 0) revert VaultFundManager__ZeroAmount();
 
         uint256 contractBalance = IERC20(asset).balanceOf(address(this));
-        if (assetsWithFee > contractBalance) {
-            revert InsufficientBalance();
-        }
+        if (assetsWithFee > contractBalance) revert VaultFundManager__InsufficientBalance();
+
         // record the snapshot of the necessary state variables
         initialStateVars = _captureCurrentStateInformation();
 
         // When this happens, this means the vault is new (`onUnderlyingBalanceUpdate` has not been called) or
         // when the value of `onUnderlyingBalanceUpdate` was set as 0 which means the vault has lost all it's value
         // Adding it here, so we fail fast. As part of step2: we deduct the totalAssets() value by calling `onUnderlyingBalanceUpdate`
-        require(
-            initialStateVars.aggregatedUnderlyingBalances != 0
-                && initialStateVars.aggregatedUnderlyingBalances >= assetsWithFee,
-            "INVARIANT: InvalidCurrentAggregateBalance"
-        );
+        if (
+            initialStateVars.aggregatedUnderlyingBalances == 0
+                || initialStateVars.aggregatedUnderlyingBalances < assetsWithFee
+        ) {
+            revert VaultFundManager__InvalidCurrentAggregateBalance();
+        }
 
         // Step 1: Transfer the required assets from this contract to the vault
         IERC20(asset).safeTransfer(address(vault), assetsWithFee);
@@ -508,18 +525,11 @@ contract VaultFundManager is ReentrancyGuard {
      * @custom:emits RemoveFunds
      */
     function removeFunds(address to, uint256 amount) external onlyVault {
-        if (to == address(0)) {
-            revert ZeroAddress();
-        }
-
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
+        if (to == address(0)) revert VaultFundManager__ZeroAddress();
+        if (amount == 0) revert VaultFundManager__ZeroAmount();
 
         uint256 balance = IERC20(asset).balanceOf(address(this));
-        if (balance < amount) {
-            revert InsufficientBalance();
-        }
+        if (balance < amount) revert VaultFundManager__InsufficientBalance();
 
         IERC20(asset).safeTransfer(to, amount);
         emit RemoveFunds(to, amount);
@@ -530,9 +540,6 @@ contract VaultFundManager is ReentrancyGuard {
      * @dev This function can only be called by the vault contract through the manage function.
      *      It's used to transfer native blockchain assets
      *      for operational purposes such as paying gas fees or moving native assets to exchanges.
-     *
-     *      Note: This function uses a low-level call which does not revert on failure.
-     *      Consider adding return value checking if needed for your use case.
      *
      * @param to The address to receive the native funds (must be whitelisted by the vault)
      * @param amount The amount of native assets to transfer (in wei)
@@ -551,24 +558,21 @@ contract VaultFundManager is ReentrancyGuard {
      * @custom:emits RemoveFundsNative
      */
     function removeFundsNative(address to, uint256 amount) external onlyVault {
-        if (to == address(0)) {
-            revert ZeroAddress();
-        }
+        if (to == address(0)) revert VaultFundManager__ZeroAddress();
+        if (amount == 0) revert VaultFundManager__ZeroAmount();
 
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
         uint256 balance = address(this).balance;
-        if (balance < amount) {
-            revert InsufficientBalance();
-        }
+        if (balance < amount) revert VaultFundManager__InsufficientBalance();
+
         (bool success,) = to.call{ value: amount }("");
-        require(success, "Transfer failed");
+        if (!success) revert VaultFundManager__TransferFailed();
 
         emit RemoveFundsNative(to, amount);
     }
 
-    //============================== VIEW FUNCTIONS ===============================
+    /*//////////////////////////////////////////////////////////////
+                    USER-FACING READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Returns the current asset balance held by this contract
@@ -593,6 +597,10 @@ contract VaultFundManager is ReentrancyGuard {
     function getTotalAssets() external view returns (uint256 totalAssets) {
         return vault.totalAssets();
     }
+
+    /*//////////////////////////////////////////////////////////////
+                      PRIVATE READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Calculate the percentage change between two prices
@@ -644,11 +652,11 @@ contract VaultFundManager is ReentrancyGuard {
      * @param finalState The state after the operation
      * @param assetsWithFee The amount of assets involved in the operation
      * @param shares The amount of shares involved in the operation
-     * @dev Ensures that state changes are within acceptable tolerance (0.5% slippage)
+     * @dev Ensures that state changes are within acceptable tolerance (0.1% slippage)
      *      and that invariants are maintained
      *
      * Requirements:
-     * - Price per share slippage must be < 0.5%
+     * - Price per share slippage must be < 0.1%
      * - Total assets must not decrease unexpectedly
      * - Total supply must not decrease unexpectedly
      * - Token balance must not decrease
@@ -664,35 +672,38 @@ contract VaultFundManager is ReentrancyGuard {
         pure
     {
         // 1e15 => 0.1%
-        require(
+        if (
             _calculatePercentageChange(initialState.lastPricePerShare, finalState.lastPricePerShare)
-                < 1e15,
-            "FUND_MANAGER: lastPricePerShare:SlippageGreaterThanThreshold"
-        );
+                >= 1e15
+        ) {
+            revert VaultFundManager__LastPricePerShareSlippageExceeded();
+        }
 
-        require(
+        if (
             _calculatePercentageChange(initialState.priceOfOneShare, finalState.priceOfOneShare)
-                < 1e15,
-            "FUND_MANAGER: priceOfOneShare:SlippageGreaterThanThreshold"
-        );
+                >= 1e15
+        ) {
+            revert VaultFundManager__PriceOfOneShareSlippageExceeded();
+        }
 
-        require(
-            initialState.totalAssets - assetsWithFee <= finalState.totalAssets,
-            "FUND_MANAGER: totalAssets:LessThanExpected"
-        );
-        require(
-            initialState.totalSupply - shares <= finalState.totalSupply,
-            "FUND_MANAGER: totalSupply:LessThanExpected"
-        );
+        if (initialState.totalAssets - assetsWithFee > finalState.totalAssets) {
+            revert VaultFundManager__TotalAssetsLessThanExpected();
+        }
+
+        if (initialState.totalSupply - shares > finalState.totalSupply) {
+            revert VaultFundManager__TotalSupplyLessThanExpected();
+        }
+
         // `tokenBalanceBefore` will always be equal to `tokenBalanceAfter`. But the operator can decide to send in additional `assets` to the vault
-        require(
-            initialState.tokenBalance <= finalState.tokenBalance,
-            "FUND_MANAGER: AssetBalanceMismatch"
-        );
-        require(
+        if (initialState.tokenBalance > finalState.tokenBalance) {
+            revert VaultFundManager__AssetBalanceMismatch();
+        }
+
+        if (
             initialState.aggregatedUnderlyingBalances
-                == finalState.aggregatedUnderlyingBalances + assetsWithFee,
-            "FUND_MANAGER: UnderlyingBalanceMismatch"
-        );
+                != finalState.aggregatedUnderlyingBalances + assetsWithFee
+        ) {
+            revert VaultFundManager__UnderlyingBalanceMismatch();
+        }
     }
 }

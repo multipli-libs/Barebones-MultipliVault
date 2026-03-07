@@ -54,7 +54,9 @@ contract MultipliVault is
     using Address for address;
     using SafeERC20 for IERC20;
 
-    //============================== TYPES ===============================
+    /*//////////////////////////////////////////////////////////////
+                           TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Enum defining different types of redemption requests
@@ -116,7 +118,9 @@ contract MultipliVault is
         mapping(address user => PendingRedeem redeem) pendingRedeem;
     }
 
-    //============================== CONSTANTS ===============================
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
 
     /// @dev Assume requests are non-fungible and all have ID = 0, so we can differentiate between a request ID and the assets amount
     uint256 internal constant REQUEST_ID = 0;
@@ -127,21 +131,23 @@ contract MultipliVault is
     /// @dev The maximum percentage that can be set as a threshold for the percentage change (1e17 = 10%)
     uint256 internal constant MAX_PERCENTAGE_THRESHOLD = 1e17;
 
-    //============================== STORAGE ===============================
-
     // Storage slot for the MultipliVaultStorage struct.
     // keccak256(abi.encode(uint256(keccak256("multipli.storage.MultipliVaultStorage")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant MULTIPLI_VAULT_STORAGE_LOCATION =
         0x5c514b81e93a4e64ed3b3d78d8355319d5f0f527b3964e825d59f3a9d74af900;
 
-    //============================== CONSTRUCTOR ===============================
+    /*//////////////////////////////////////////////////////////////
+                              CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    //============================== INITIALIZER ===============================
+    /*//////////////////////////////////////////////////////////////
+                  USER-FACING STATE-CHANGING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Initializes the MultipliVault contract
@@ -163,47 +169,6 @@ contract MultipliVault is
     }
 
     /**
-     * @notice Initializes the MultipliVault contract
-     * @dev This function should be called during contract initialization
-     * @param _asset The underlying ERC20 asset for the vault
-     * @param _owner The initial owner of the vault
-     * @param _name The name of the vault token
-     * @param _symbol The symbol of the vault token
-     */
-    function __MultipliVault_init(
-        IERC20 _asset,
-        address _owner,
-        string memory _name,
-        string memory _symbol
-    )
-        internal
-        onlyInitializing
-    {
-        __ERC20_init(_name, _symbol);
-        __ERC4626_init(_asset);
-        __Auth_init(_owner, Authority(address(0)));
-        __Pausable_init();
-        __VaultFeeUpgreadable_init(IVariableVaultFee(address(0)));
-        __FundMovementHelper_init();
-        __ReentrancyGuard_init();
-        __MultipliVault_init_unchained();
-    }
-
-    /**
-     * @notice Unchained initializer for MultipliVault
-     * @dev Contains the actual initialization logic for MultipliVault-specific storage
-     */
-    /// @custom:oz-upgrades-unsafe-allow missing-initializer-call
-    // reference: https://forum.openzeppelin.com/t/potential-false-positive-missing-initializer-calls-for-one-or-more-parent-contracts/43911/3
-    function __MultipliVault_init_unchained() internal onlyInitializing {
-        MultipliVaultStorage storage $ = _getMultipliVaultStorage();
-        $.maxPercentageChange = 1e16; // 1%
-        $.minDepositAmount = 0;
-    }
-
-    //============================== PUBLIC FUNCTIONS ===============================
-
-    /**
      * @notice Allows the vault operator to manage the vault by calling external contracts
      * @param target The target contract to make a call to
      * @param data The data to send to the target contract
@@ -221,10 +186,9 @@ contract MultipliVault is
         returns (bytes memory result)
     {
         bytes4 functionSig = bytes4(data);
-        require(
-            authority().canCall(msg.sender, target, functionSig),
-            Errors.TargetMethodNotAuthorized(target, functionSig)
-        );
+        if (!authority().canCall(msg.sender, target, functionSig)) {
+            revert Errors.Errors__TargetMethodNotAuthorized(target, functionSig);
+        }
 
         result = target.functionCallWithValue(data, value);
     }
@@ -247,16 +211,15 @@ contract MultipliVault is
         returns (bytes[] memory results)
     {
         uint256 targetsLength = targets.length;
-        require(
-            targetsLength == data.length && data.length == values.length, "Array lengths must match"
-        );
+        if (targetsLength != data.length || data.length != values.length) {
+            revert Errors.Errors__ArrayLengthsMismatch();
+        }
         results = new bytes[](targetsLength);
         for (uint256 i; i < targetsLength; ++i) {
             bytes4 functionSig = bytes4(data[i]);
-            require(
-                authority().canCall(msg.sender, targets[i], functionSig),
-                Errors.TargetMethodNotAuthorized(targets[i], functionSig)
-            );
+            if (!authority().canCall(msg.sender, targets[i], functionSig)) {
+                revert Errors.Errors__TargetMethodNotAuthorized(targets[i], functionSig);
+            }
             results[i] = targets[i].functionCallWithValue(data[i], values[i]);
         }
     }
@@ -311,8 +274,8 @@ contract MultipliVault is
         address owner
     )
         external
-        whenNotPaused
         nonReentrant
+        whenNotPaused
         returns (uint256)
     {
         return _processRedeemRequest(RedeemParams(shares, receiver, owner, RedeemType.NORMAL));
@@ -332,9 +295,9 @@ contract MultipliVault is
         address owner
     )
         external
+        nonReentrant
         whenNotPaused
         requiresAuth
-        nonReentrant
         returns (uint256)
     {
         return _processRedeemRequest(RedeemParams(shares, receiver, owner, RedeemType.INSTANT));
@@ -383,6 +346,7 @@ contract MultipliVault is
      * @param operator The contract that will handle position unwinding on Euler
      * @param receiver The address that will receive the USDC (usually the user)
      * @param shares The amount of shares to redeem (total position size)
+     * @param assetsWithFee The amount of assets including fees
      * @param data Additional data for the operator callback
      */
     function flashRedeem(
@@ -394,14 +358,14 @@ contract MultipliVault is
         bytes calldata data
     )
         external
+        nonReentrant
         whenNotPaused
         requiresAuth
-        nonReentrant
     {
         // Input validation
-        require(shares > 0, Errors.SharesAmountZero());
-        require(receiver != address(0), Errors.InvalidReceiverAddress());
-        require(operator != address(0), Errors.InvalidOperatorAddress());
+        if (shares == 0) revert Errors.Errors__SharesAmountZero();
+        if (receiver == address(0)) revert Errors.Errors__InvalidReceiverAddress();
+        if (operator == address(0)) revert Errors.Errors__InvalidOperatorAddress();
 
         address token = asset();
 
@@ -410,7 +374,7 @@ contract MultipliVault is
 
         // Check vault has sufficient liquidity
         uint256 vaultBalance = IERC20(token).balanceOf(address(this));
-        require(vaultBalance >= assetsWithFee, Errors.InvalidAssetsAmount());
+        if (vaultBalance < assetsWithFee) revert Errors.Errors__InvalidAssetsAmount();
 
         uint256 shareBalanceBefore = balanceOf(address(this));
         uint256 totalSupplyBefore = totalSupply();
@@ -431,24 +395,25 @@ contract MultipliVault is
         {
             // Verify the operator returned the required shares
             uint256 shareBalanceAfter = balanceOf(address(this));
-            require(shareBalanceAfter >= shareBalanceBefore + shares, Errors.SharesNotReturned());
+            if (shareBalanceAfter < shareBalanceBefore + shares) {
+                revert Errors.Errors__SharesNotReturned();
+            }
         }
 
         // Burn the returned shares (completing the redemption)
         _burn(address(this), shares);
 
         {
-            // note: totalSupply check was added before re-entrancy
-            // guard was added to `flashRedeem` method, is this still required?
-
             // Verify total supply decreased correctly
-            require(totalSupply() == totalSupplyBefore - shares, Errors.TotalSupplyMismatch());
+            if (totalSupply() != totalSupplyBefore - shares) {
+                revert Errors.Errors__TotalSupplyMismatch();
+            }
 
             // Verify the `asset` balance after redemption
             uint256 tokenBalanceAfter = IERC20(token).balanceOf(address(this));
-            require(
-                vaultBalance - assetsWithFee <= tokenBalanceAfter, Errors.AssetBalanceMismatch()
-            );
+            if (vaultBalance - assetsWithFee > tokenBalanceAfter) {
+                revert Errors.Errors__AssetBalanceMismatch();
+            }
         }
 
         emit FlashRedeemFulfilled(initiator, operator, receiver, shares, assetsWithoutFee, fee);
@@ -472,10 +437,12 @@ contract MultipliVault is
         MultipliVaultStorage storage $ = _getMultipliVaultStorage();
         PendingRedeem storage pending = $.pendingRedeem[receiver];
 
-        require(pending.shares != 0 && shares <= pending.shares, Errors.InvalidSharesAmount());
-        require(
-            pending.assets != 0 && assetsWithFee <= pending.assets, Errors.InvalidAssetsAmount()
-        );
+        if (pending.shares == 0 || shares > pending.shares) {
+            revert Errors.Errors__InvalidSharesAmount();
+        }
+        if (pending.assets == 0 || assetsWithFee > pending.assets) {
+            revert Errors.Errors__InvalidAssetsAmount();
+        }
 
         pending.shares -= shares;
         pending.assets -= assetsWithFee;
@@ -499,7 +466,9 @@ contract MultipliVault is
         MultipliVaultStorage storage $ = _getMultipliVaultStorage();
 
         // Fail fast - ensure this is the first update in this block
-        require(block.number > $.lastBlockUpdated, Errors.UpdateAlreadyCompletedInThisBlock());
+        if (block.number <= $.lastBlockUpdated) {
+            revert Errors.Errors__UpdateAlreadyCompletedInThisBlock();
+        }
 
         emit UnderlyingBalanceUpdated($.aggregatedUnderlyingBalances, newAggregatedBalance);
         $.aggregatedUnderlyingBalances = newAggregatedBalance;
@@ -529,20 +498,14 @@ contract MultipliVault is
     }
 
     /**
-     * @notice Get the fee recipient address for the vault's asset
-     * @return The address that receives fees
-     */
-    function getFeeRecipient() public view returns (address) {
-        return _getFeeRecipient(asset());
-    }
-
-    /**
      * @notice Update the maximum percentage change allowed before the vault is paused
      * @param newMaxPercentageChange The new maximum percentage change (max value is 1e17 = 10%)
      * @dev Used to protect against oracle manipulation and excessive volatility
      */
     function updateMaxPercentageChange(uint256 newMaxPercentageChange) external requiresAuth {
-        require(newMaxPercentageChange < MAX_PERCENTAGE_THRESHOLD, Errors.InvalidMaxPercentage());
+        if (newMaxPercentageChange >= MAX_PERCENTAGE_THRESHOLD) {
+            revert Errors.Errors__InvalidMaxPercentage();
+        }
 
         MultipliVaultStorage storage $ = _getMultipliVaultStorage();
 
@@ -561,7 +524,177 @@ contract MultipliVault is
         $.minDepositAmount = newMinDepositAmount;
     }
 
-    //============================== VIEW FUNCTIONS ===============================
+    /**
+     * @notice Override the default `deposit` function with additional checks
+     * @param assets The amount of assets to deposit
+     * @param receiver The address that will receive the shares
+     * @return shares The amount of shares minted
+     * @dev Adds pause protection and minimum deposit amount validation
+     */
+    function deposit(
+        uint256 assets,
+        address receiver
+    )
+        public
+        override
+        nonReentrant
+        whenNotPaused
+        returns (uint256)
+    {
+        uint256 maxAssets = maxDeposit(receiver);
+        if (assets > maxAssets) {
+            revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
+        }
+
+        MultipliVaultStorage storage $ = _getMultipliVaultStorage();
+        uint256 currentMinDepositAmount = $.minDepositAmount;
+
+        if (assets < currentMinDepositAmount) {
+            revert Errors.Errors__DepositAmountLessThanThreshold(assets, currentMinDepositAmount);
+        }
+
+        uint256 shares = previewDeposit(assets);
+        _deposit(_msgSender(), receiver, assets, shares);
+
+        return shares;
+    }
+
+    /**
+     * @notice Deposit assets with slippage protection (ERC-5143 compatible)
+     * @dev This function extends the standard ERC-4626 deposit function with slippage protection
+     *      as specified in ERC-5143: Slippage Protection for Tokenized Vault and introduces additional checks.
+     *      Reverts if the number of shares received is less than the minimum expected.
+     * @param assets The amount of assets to deposit
+     * @param receiver The address that will receive the vault shares
+     * @param minShares The minimum number of shares the caller is willing to accept
+     * @return shares The actual number of shares minted to the receiver
+     * @custom:security Protects against MEV attacks and exchange rate manipulation
+     */
+    function deposit(
+        uint256 assets,
+        address receiver,
+        uint256 minShares
+    )
+        public
+        whenNotPaused
+        returns (uint256)
+    {
+        uint256 shares = deposit(assets, receiver);
+        if (shares < minShares) {
+            revert Errors.Errors__InsufficientSharesReceived(shares, minShares);
+        }
+        return shares;
+    }
+
+    /**
+     * @notice Allows admin to mint shares to a specified receiver
+     * @dev This function can be called even when the contract is paused, unlike other methods
+     * @param receiver The address that will receive the newly minted shares
+     * @param shares The amount of shares to mint
+     */
+    function adminMint(address receiver, uint256 shares) public requiresAuth {
+        _mint(receiver, shares);
+    }
+
+    /**
+     * @notice Allows admin to burn shares from a specified owner
+     * @dev This function can be called even when the contract is paused, unlike other methods
+     * @param owner The address from which shares will be burned
+     * @param shares The amount of shares to burn
+     */
+    function adminBurn(address owner, uint256 shares) public requiresAuth {
+        _burn(owner, shares);
+    }
+
+    /**
+     * @notice Override the default `mint` function with additional checks
+     * @param shares The amount of shares to mint
+     * @param receiver The address that will receive the shares
+     * @return assets The amount of assets required
+     * @dev Adds pause protection and minimum deposit amount validation
+     */
+    function mint(
+        uint256 shares,
+        address receiver
+    )
+        public
+        override
+        nonReentrant
+        whenNotPaused
+        returns (uint256)
+    {
+        uint256 maxShares = maxMint(receiver);
+        if (shares > maxShares) {
+            revert ERC4626ExceededMaxMint(receiver, shares, maxShares);
+        }
+        uint256 assets = previewMint(shares);
+
+        MultipliVaultStorage storage $ = _getMultipliVaultStorage();
+        uint256 currentMinDepositAmount = $.minDepositAmount;
+
+        if (assets < currentMinDepositAmount) {
+            revert Errors.Errors__DepositAmountLessThanThreshold(assets, currentMinDepositAmount);
+        }
+
+        _deposit(_msgSender(), receiver, assets, shares);
+
+        return assets;
+    }
+
+    /**
+     * @notice Mint shares with slippage protection (ERC-5143 compatible)
+     * @dev This function extends the standard ERC-4626 mint function with slippage protection
+     *      as specified in ERC-5143: Slippage Protection for Tokenized Vault.
+     *      Reverts if the number of assets required exceeds the maximum the caller is willing to pay.
+     * @param shares The exact number of shares to mint
+     * @param receiver The address that will receive the vault shares
+     * @param maxAssets The maximum number of assets the caller is willing to pay
+     * @return assets The actual number of assets transferred from the caller
+     * @custom:security Protects against MEV attacks and exchange rate manipulation
+     */
+    function mint(
+        uint256 shares,
+        address receiver,
+        uint256 maxAssets
+    )
+        public
+        whenNotPaused
+        returns (uint256)
+    {
+        uint256 assets = mint(shares, receiver);
+        if (assets > maxAssets) {
+            revert Errors.Errors__ExcessiveAssetsRequired(assets, maxAssets);
+        }
+        return assets;
+    }
+
+    /**
+     * @notice Disabled - use requestRedeem instead
+     * @dev This function is disabled to enforce the asynchronous redemption flow
+     */
+    function withdraw(uint256, address, address) public override whenNotPaused returns (uint256) {
+        revert Errors.Errors__UseRequestRedeem();
+    }
+
+    /**
+     * @notice Disabled - use requestRedeem instead
+     * @dev This function is disabled to enforce the asynchronous redemption flow
+     */
+    function redeem(uint256, address, address) public override whenNotPaused returns (uint256) {
+        revert Errors.Errors__UseRequestRedeem();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                    USER-FACING READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Get the fee recipient address for the vault's asset
+     * @return The address that receives fees
+     */
+    function getFeeRecipient() public view returns (address) {
+        return _getFeeRecipient(asset());
+    }
 
     /**
      * @notice Get the pending redemption request details for a user
@@ -626,8 +759,6 @@ contract MultipliVault is
         return _getMultipliVaultStorage().minDepositAmount;
     }
 
-    //============================== OVERRIDES ===============================
-
     /**
      * @notice Override the default `totalAssets` function to include aggregated underlying balances
      * @return The total assets held by the vault and across all strategies
@@ -635,174 +766,6 @@ contract MultipliVault is
     function totalAssets() public view override returns (uint256) {
         MultipliVaultStorage storage $ = _getMultipliVaultStorage();
         return IERC20(asset()).balanceOf(address(this)) + $.aggregatedUnderlyingBalances;
-    }
-
-    /**
-     * @notice Override the default `deposit` function with additional checks
-     * @param assets The amount of assets to deposit
-     * @param receiver The address that will receive the shares
-     * @return shares The amount of shares minted
-     * @dev Adds pause protection and minimum deposit amount validation
-     */
-    function deposit(
-        uint256 assets,
-        address receiver
-    )
-        public
-        override
-        whenNotPaused
-        nonReentrant
-        returns (uint256)
-    {
-        uint256 maxAssets = maxDeposit(receiver);
-        if (assets > maxAssets) {
-            revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
-        }
-
-        MultipliVaultStorage storage $ = _getMultipliVaultStorage();
-        uint256 currentMinDepositAmount = $.minDepositAmount;
-
-        if (assets < currentMinDepositAmount) {
-            revert Errors.DepositAmountLessThanThreshold(assets, currentMinDepositAmount);
-        }
-
-        uint256 shares = previewDeposit(assets);
-        _deposit(_msgSender(), receiver, assets, shares);
-
-        return shares;
-    }
-
-    /**
-     * @notice Deposit assets with slippage protection (ERC-5143 compatible)
-     * @dev This function extends the standard ERC-4626 deposit function with slippage protection
-     *      as specified in ERC-5143: Slippage Protection for Tokenized Vault and introduces additional checks.
-     *      Reverts if the number of shares received is less than the minimum expected.
-     * @param assets The amount of assets to deposit
-     * @param receiver The address that will receive the vault shares
-     * @param minShares The minimum number of shares the caller is willing to accept
-     * @return shares The actual number of shares minted to the receiver
-     * @custom:security Protects against MEV attacks and exchange rate manipulation
-     */
-    function deposit(
-        uint256 assets,
-        address receiver,
-        uint256 minShares
-    )
-        public
-        whenNotPaused
-        returns (uint256)
-    {
-        uint256 shares = deposit(assets, receiver);
-        if (shares < minShares) {
-            revert Errors.InsufficientSharesReceived(shares, minShares);
-        }
-        return shares;
-    }
-
-    /**
-     * @notice Allows admin to mint shares to a specified receiver
-     * @dev This function can be called even when the contract is paused, unlike other methods
-     * @param receiver The address that will receive the newly minted shares
-     * @param shares The amount of shares to mint
-     */
-    function adminMint(address receiver, uint256 shares) public requiresAuth {
-        _mint(receiver, shares);
-    }
-
-    /**
-     * @notice Allows admin to burn shares from a specified owner
-     * @dev This function can be called even when the contract is paused, unlike other methods
-     * @param owner The address from which shares will be burned
-     * @param shares The amount of shares to burn
-     */
-    function adminBurn(address owner, uint256 shares) public requiresAuth {
-        _burn(owner, shares);
-    }
-
-    /**
-     * @notice Override the default `mint` function with additional checks
-     * @param shares The amount of shares to mint
-     * @param receiver The address that will receive the shares
-     * @return assets The amount of assets required
-     * @dev Adds pause protection and minimum deposit amount validation
-     */
-    function mint(
-        uint256 shares,
-        address receiver
-    )
-        public
-        override
-        whenNotPaused
-        nonReentrant
-        returns (uint256)
-    {
-        uint256 maxShares = maxMint(receiver);
-        if (shares > maxShares) {
-            revert ERC4626ExceededMaxMint(receiver, shares, maxShares);
-        }
-        uint256 assets = previewMint(shares);
-
-        MultipliVaultStorage storage $ = _getMultipliVaultStorage();
-        uint256 currentMinDepositAmount = $.minDepositAmount;
-
-        if (assets < currentMinDepositAmount) {
-            revert Errors.DepositAmountLessThanThreshold(assets, currentMinDepositAmount);
-        }
-
-        _deposit(_msgSender(), receiver, assets, shares);
-
-        return assets;
-    }
-
-    /**
-     * @notice Mint shares with slippage protection (ERC-5143 compatible)
-     * @dev This function extends the standard ERC-4626 mint function with slippage protection
-     *      as specified in ERC-5143: Slippage Protection for Tokenized Vault.
-     *      Reverts if the number of assets required exceeds the maximum the caller is willing to pay.
-     * @param shares The exact number of shares to mint
-     * @param receiver The address that will receive the vault shares
-     * @param maxAssets The maximum number of assets the caller is willing to pay
-     * @return assets The actual number of assets transferred from the caller
-     * @custom:security Protects against MEV attacks and exchange rate manipulation
-     */
-    function mint(
-        uint256 shares,
-        address receiver,
-        uint256 maxAssets
-    )
-        public
-        whenNotPaused
-        returns (uint256)
-    {
-        uint256 assets = mint(shares, receiver);
-        if (assets > maxAssets) {
-            revert Errors.ExcessiveAssetsRequired(assets, maxAssets);
-        }
-        return assets;
-    }
-
-    /**
-     * @notice Disabled - use requestRedeem instead
-     * @dev This function is disabled to enforce the asynchronous redemption flow
-     */
-    function withdraw(uint256, address, address) public override whenNotPaused returns (uint256) {
-        revert Errors.UseRequestRedeem();
-    }
-
-    /**
-     * @notice Disabled - use requestRedeem instead
-     * @dev This function is disabled to enforce the asynchronous redemption flow
-     */
-    function redeem(uint256, address, address) public override whenNotPaused returns (uint256) {
-        revert Errors.UseRequestRedeem();
-    }
-
-    /**
-     * @notice Override the default `_update` function to add pause protection
-     * @dev The _update function is called on all transfers, mints and burns
-     */
-    function _update(address from, address to, uint256 value) internal override whenNotPaused {
-        super._update(from, to, value);
     }
 
     /**
@@ -865,7 +828,47 @@ contract MultipliVault is
         return assets - _feeOnTotalFlashWithdrawal(asset(), assets);
     }
 
-    //============================== INTERNAL FUNCTIONS ===============================
+    /*//////////////////////////////////////////////////////////////
+                      INTERNAL STATE-CHANGING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Initializes the MultipliVault contract
+     * @dev This function should be called during contract initialization
+     * @param _asset The underlying ERC20 asset for the vault
+     * @param _owner The initial owner of the vault
+     * @param _name The name of the vault token
+     * @param _symbol The symbol of the vault token
+     */
+    function __MultipliVault_init(
+        IERC20 _asset,
+        address _owner,
+        string memory _name,
+        string memory _symbol
+    )
+        internal
+        onlyInitializing
+    {
+        __ERC20_init(_name, _symbol);
+        __ERC4626_init(_asset);
+        __Auth_init(_owner, Authority(address(0)));
+        __Pausable_init();
+        __VaultFeeUpgreadable_init(IVariableVaultFee(address(0)));
+        __FundMovementHelper_init();
+        __ReentrancyGuard_init();
+        __MultipliVault_init_unchained();
+    }
+
+    /**
+     * @notice Unchained initializer for MultipliVault
+     * @dev Contains the actual initialization logic for MultipliVault-specific storage
+     */
+    /// @custom:oz-upgrades-unsafe-allow missing-initializer-call
+    // reference: https://forum.openzeppelin.com/t/potential-false-positive-missing-initializer-calls-for-one-or-more-parent-contracts/43911/3
+    function __MultipliVault_init_unchained() internal onlyInitializing {
+        MultipliVaultStorage storage $ = _getMultipliVaultStorage();
+        $.maxPercentageChange = 1e16; // 1%
+    }
 
     /**
      * @notice Internal deposit function with fee handling
@@ -897,15 +900,23 @@ contract MultipliVault is
     }
 
     /**
+     * @notice Override the default `_update` function to add pause protection
+     * @dev The _update function is called on all transfers, mints and burns
+     */
+    function _update(address from, address to, uint256 value) internal override whenNotPaused {
+        super._update(from, to, value);
+    }
+
+    /**
      * @notice Internal function to handle redeem request logic for all redeem types
      * @param params The redemption parameters
      * @return requestId The request ID (always 0)
      * @dev Validates ownership, transfers shares to vault, and stores pending request
      */
     function _processRedeemRequest(RedeemParams memory params) internal virtual returns (uint256) {
-        require(params.shares > 0, Errors.SharesAmountZero());
-        require(params.owner == msg.sender, Errors.NotSharesOwner());
-        require(balanceOf(params.owner) >= params.shares, Errors.InsufficientShares());
+        if (params.shares == 0) revert Errors.Errors__SharesAmountZero();
+        if (params.owner != msg.sender) revert Errors.Errors__NotSharesOwner();
+        if (balanceOf(params.owner) < params.shares) revert Errors.Errors__InsufficientShares();
 
         uint256 assetsWithFee = super.previewRedeem(params.shares);
 
@@ -949,7 +960,7 @@ contract MultipliVault is
         } else if (redeemType == RedeemType.INSTANT) {
             emit InstantRedeemRequest(receiver, owner, assetsWithFee, shares);
         } else {
-            revert Errors.UnsupportedRedeemType(uint8(redeemType));
+            revert Errors.Errors__UnsupportedRedeemType(uint8(redeemType));
         }
     }
 
@@ -973,7 +984,7 @@ contract MultipliVault is
         } else if (redeemType == RedeemType.INSTANT) {
             emit InstantRequestFulfilled(receiver, shares, assetsWithFee);
         } else {
-            revert Errors.UnsupportedRedeemType(uint8(redeemType));
+            revert Errors.Errors__UnsupportedRedeemType(uint8(redeemType));
         }
     }
 
@@ -986,13 +997,12 @@ contract MultipliVault is
         MultipliVaultStorage storage $ = _getMultipliVaultStorage();
 
         PendingRedeem storage pending = $.pendingRedeem[params.receiver];
-        require(
-            pending.shares != 0 && params.shares <= pending.shares, Errors.InvalidSharesAmount()
-        );
-        require(
-            pending.assets != 0 && params.assetsWithFee <= pending.assets,
-            Errors.InvalidAssetsAmount()
-        );
+        if (pending.shares == 0 || params.shares > pending.shares) {
+            revert Errors.Errors__InvalidSharesAmount();
+        }
+        if (pending.assets == 0 || params.assetsWithFee > pending.assets) {
+            revert Errors.Errors__InvalidAssetsAmount();
+        }
 
         pending.shares -= params.shares;
         pending.assets -= params.assetsWithFee;
@@ -1032,7 +1042,7 @@ contract MultipliVault is
         } else if (redeemType == RedeemType.INSTANT) {
             feeAmount = _feeOnTotalInstantWithdrawal(token, assetsWithFee);
         } else {
-            revert Errors.UnsupportedRedeemType(uint8(redeemType));
+            revert Errors.Errors__UnsupportedRedeemType(uint8(redeemType));
         }
 
         uint256 assets = assetsWithFee - feeAmount;
@@ -1047,7 +1057,17 @@ contract MultipliVault is
         }
     }
 
-    //============================== PRIVATE FUNCTIONS ===============================
+    /**
+     * @notice Authorize contract upgrades (UUPS pattern)
+     * @dev Only owner or authorized roles can upgrade the implementation
+     * @param newImplementation The new implementation contract address
+     * @custom:security Prevents unauthorized upgrades that could compromise the protocol
+     */
+    function _authorizeUpgrade(address newImplementation) internal virtual override requiresAuth { }
+
+    /*//////////////////////////////////////////////////////////////
+                      PRIVATE READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Calculate the percentage change between two prices
@@ -1081,12 +1101,4 @@ contract MultipliVault is
             $.slot := MULTIPLI_VAULT_STORAGE_LOCATION
         }
     }
-
-    /**
-     * @notice Authorize contract upgrades (UUPS pattern)
-     * @dev Only owner or authorized roles can upgrade the implementation
-     * @param newImplementation The new implementation contract address
-     * @custom:security Prevents unauthorized upgrades that could compromise the protocol
-     */
-    function _authorizeUpgrade(address newImplementation) internal virtual override requiresAuth { }
 }

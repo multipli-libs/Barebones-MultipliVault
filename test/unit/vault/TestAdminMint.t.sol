@@ -24,7 +24,7 @@ contract TestAdminMint is BaseTest {
 
     function test_adminMint__Reverts__CalledByUnAuthorizedUser() public {
         vm.startPrank(users.alice);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.adminMint(users.alice, getQuantizedValue(10));
         vm.stopPrank();
     }

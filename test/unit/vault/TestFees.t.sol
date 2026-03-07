@@ -248,7 +248,7 @@ contract TestVaultFeeOperations is BaseTest {
         vm.startPrank(alice);
         token.approve(address(depositVault), depositAmount);
 
-        vm.expectRevert(IVariableVaultFee.ZeroAmount.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__ZeroAmount.selector);
         uint256 sharesReceived = depositVault.deposit(depositAmount, alice);
         vm.stopPrank();
 
@@ -277,7 +277,7 @@ contract TestVaultFeeOperations is BaseTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                VaultFeeUpgradeable.ConfiguredIncorrectly.selector, 
+                VaultFeeUpgradeable.VaultFee__ConfiguredIncorrectly.selector, 
                 originalDepositSelector
         ));
         uint256 sharesReceived = depositVault.deposit(depositAmount, alice);
@@ -413,7 +413,7 @@ contract TestVaultFeeOperations is BaseTest {
 
         uint256 sharesToMint = 0;
 
-        vm.expectRevert(abi.encodeWithSignature("ZeroAmount()"));
+        vm.expectRevert(abi.encodeWithSignature("IVariableVaultFee__ZeroAmount()"));
         uint256 previewAssets = depositVault.previewMint(sharesToMint);
 
         uint256 expectedFee = 0;
@@ -427,7 +427,7 @@ contract TestVaultFeeOperations is BaseTest {
         vm.startPrank(alice);
         token.approve(address(depositVault), previewAssets);
 
-        vm.expectRevert(abi.encodeWithSignature("ZeroAmount()"));
+        vm.expectRevert(abi.encodeWithSignature("IVariableVaultFee__ZeroAmount()"));
         uint256 assetsUsed = depositVault.mint(sharesToMint, alice);
         vm.stopPrank();
     }
@@ -464,7 +464,7 @@ contract TestVaultFeeOperations is BaseTest {
         token.approve(address(depositVault), depositAmount);
 
         vm.expectRevert(
-            abi.encodeWithSelector(VaultFeeUpgradeable.ConfiguredIncorrectly.selector, originalMintSelector)
+            abi.encodeWithSelector(VaultFeeUpgradeable.VaultFee__ConfiguredIncorrectly.selector, originalMintSelector)
         );
         uint256 sharesReceived = depositVault.mint(depositAmount, alice);
         vm.stopPrank();
@@ -546,7 +546,7 @@ contract TestVaultFeeOperations is BaseTest {
         _registerAssetWithFees(assetConfig);
 
         vm.startPrank(alice);
-        vm.expectRevert(Errors.SharesAmountZero.selector); // Should revert with SharesAmountZero
+        vm.expectRevert(Errors.Errors__SharesAmountZero.selector); // Should revert with SharesAmountZero
         depositVault.requestRedeem(0, alice, alice);
         vm.stopPrank();
     }
@@ -563,7 +563,7 @@ contract TestVaultFeeOperations is BaseTest {
 
         // Bob tries to redeem Alice's shares
         vm.startPrank(bob);
-        vm.expectRevert(Errors.NotSharesOwner.selector); // Should revert with NotSharesOwner
+        vm.expectRevert(Errors.Errors__NotSharesOwner.selector); // Should revert with NotSharesOwner
         depositVault.requestRedeem(shares, bob, alice);
         vm.stopPrank();
     }
@@ -576,7 +576,7 @@ contract TestVaultFeeOperations is BaseTest {
         token.approve(address(depositVault), DEPOSIT_AMOUNT_SMALL);
         uint256 shares = depositVault.deposit(DEPOSIT_AMOUNT_SMALL, alice);
 
-        vm.expectRevert(Errors.InsufficientShares.selector); // Should revert with InsufficientShares
+        vm.expectRevert(Errors.Errors__InsufficientShares.selector); // Should revert with InsufficientShares
         depositVault.requestRedeem(shares + 1, alice, alice);
         vm.stopPrank();
     }
@@ -721,7 +721,7 @@ contract TestVaultFeeOperations is BaseTest {
         vm.stopPrank();
 
         vm.startPrank(users.admin);
-        vm.expectRevert(Errors.InvalidAssetsAmount.selector); // Should revert with InvalidAssetsAmount
+        vm.expectRevert(Errors.Errors__InvalidAssetsAmount.selector); // Should revert with InvalidAssetsAmount
         depositVault.fulfillRedeem(alice, shares, expectedAssetsWithFee + 1);
         vm.stopPrank();
     }
@@ -738,7 +738,7 @@ contract TestVaultFeeOperations is BaseTest {
         vm.stopPrank();
 
         vm.startPrank(bob);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.fulfillRedeem(alice, shares, expectedAssets);
         vm.stopPrank();
     }
@@ -827,7 +827,7 @@ contract TestVaultFeeOperations is BaseTest {
         vm.stopPrank();
 
         vm.startPrank(bob);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.cancelRedeem(alice, shares, expectedAssets);
         vm.stopPrank();
     }
@@ -1017,7 +1017,7 @@ contract TestVaultFeeOperations is BaseTest {
         vm.startPrank(users.admin);
 
         // This should revert because 250 tokens fee > 100 tokens stored assets
-        vm.expectRevert(IVariableVaultFee.InsufficientAmount.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InsufficientAmount.selector);
         depositVault.fulfillRedeem(alice, shares, expectedAssetsWithFee);
         vm.stopPrank();
     }
@@ -1355,7 +1355,7 @@ contract TestVaultFeeOperations is BaseTest {
         token.approve(address(depositVault), smallAmount);
 
         // This should result in a revert
-        vm.expectRevert(IVariableVaultFee.InsufficientAmount.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InsufficientAmount.selector);
         depositVault.deposit(smallAmount, alice);
         vm.stopPrank();
     }
@@ -1386,7 +1386,7 @@ contract TestVaultFeeOperations is BaseTest {
         vm.startPrank(alice);
         token.approve(address(depositVault), exactFeeAmount);
 
-        vm.expectRevert(IVariableVaultFee.InsufficientAmount.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InsufficientAmount.selector);
         uint256 shares = depositVault.deposit(depositAmount, alice);
         vm.stopPrank();
 

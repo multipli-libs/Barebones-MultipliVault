@@ -19,7 +19,7 @@ contract Unpause_Unit_Concrete_Test is BaseTest {
 
     function testUnpause__RevertsWhenCalledUnauthorizedUser() public {
         vm.stopPrank();
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.unpause();
     }
 }

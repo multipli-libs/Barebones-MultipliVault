@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity ^0.8.30;
 
 import { IVariableVaultFee } from "../interfaces/IVariableVaultFee.sol";
 
@@ -8,17 +8,12 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 
 /**
  * @title VaultFeeUpgradeable
+ * @custom:security-contact security@multipli.com
  */
 abstract contract VaultFeeUpgradeable is Initializable {
-    /**
-     * @notice Emitted when the fee contract is updated.
-     * @param user The address initiating the update.
-     * @param oldFeeContract The previous fee contract.
-     * @param newFeeContract The new fee contract.
-     */
-    event FeeContractUpdated(address indexed user, address oldFeeContract, address newFeeContract);
-
-    error ConfiguredIncorrectly(bytes4 msgSig);
+    /*//////////////////////////////////////////////////////////////
+                           TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @custom:storage-location erc7201:multipli.storage.vaultfee
@@ -28,20 +23,63 @@ abstract contract VaultFeeUpgradeable is Initializable {
         IVariableVaultFee feeContract;
     }
 
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
+
     // Storage slot for the VaultFeeStorageLocation struct.
     // keccak256(abi.encode(uint256(keccak256("multipli.storage.vaultfeeV1")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant VaultFeeStorageLocation =
         0x4e0114f5bb788bf295d0ab17f602045fbe9841605d1e05a2674fbfa584e94700;
 
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
     /**
-     * @dev Returns a reference to the VaultFeeStorage struct.
-     * @return $ Reference to the VaultFeeStorage struct.
+     * @notice Emitted when the fee contract is updated.
+     * @param user The address initiating the update.
+     * @param oldFeeContract The previous fee contract.
+     * @param newFeeContract The new fee contract.
      */
-    function _getVaultFeeStorage() private pure returns (VaultFeeStorage storage $) {
-        assembly {
-            $.slot := VaultFeeStorageLocation
-        }
+    event FeeContractUpdated(address indexed user, address oldFeeContract, address newFeeContract);
+
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    error VaultFee__ConfiguredIncorrectly(bytes4 msgSig);
+
+    /*//////////////////////////////////////////////////////////////
+                  USER-FACING STATE-CHANGING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Updates the fee contract. Developers are expected to add access control for this method.
+     * @param _feeContract The new fee contract.
+     */
+    function setFeeContract(IVariableVaultFee _feeContract) public virtual {
+        VaultFeeStorage storage $ = _getVaultFeeStorage();
+        IVariableVaultFee oldFeeContract = feeContract();
+        $.feeContract = _feeContract;
+        emit FeeContractUpdated(msg.sender, address(oldFeeContract), address(_feeContract));
     }
+
+    /*//////////////////////////////////////////////////////////////
+                    USER-FACING READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Gets the current fee contract.
+     * @return The current fee contract address.
+     */
+    function feeContract() public view virtual returns (IVariableVaultFee) {
+        return _getVaultFeeStorage().feeContract;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                      INTERNAL STATE-CHANGING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Initializes the contract with the vault fee contract.
@@ -61,24 +99,9 @@ abstract contract VaultFeeUpgradeable is Initializable {
         emit FeeContractUpdated(msg.sender, address(0), address(_feeContract));
     }
 
-    /**
-     * @notice Gets the current fee contract.
-     * @return The current fee contract address.
-     */
-    function feeContract() public view virtual returns (IVariableVaultFee) {
-        return _getVaultFeeStorage().feeContract;
-    }
-
-    /**
-     * @notice Updates the fee contract. Developers are expected to add access control for this method.
-     * @param _feeContract The new fee contract.
-     */
-    function setFeeContract(IVariableVaultFee _feeContract) public virtual {
-        VaultFeeStorage storage $ = _getVaultFeeStorage();
-        IVariableVaultFee oldFeeContract = feeContract();
-        $.feeContract = _feeContract;
-        emit FeeContractUpdated(msg.sender, address(oldFeeContract), address(_feeContract));
-    }
+    /*//////////////////////////////////////////////////////////////
+                      INTERNAL READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     function _getFeeRecipient(address asset) internal view virtual returns (address) {
         IVariableVaultFee feeContractAddr = feeContract();
@@ -108,7 +131,7 @@ abstract contract VaultFeeUpgradeable is Initializable {
         IVariableVaultFee feeContractAddr = feeContract();
 
         if (address(feeContractAddr) == address(0)) {
-            revert ConfiguredIncorrectly(msg.sig);
+            revert VaultFee__ConfiguredIncorrectly(msg.sig);
         }
 
         if (isRawAmount) {
@@ -228,7 +251,7 @@ abstract contract VaultFeeUpgradeable is Initializable {
     }
 
     /**
-     * @notice Calculate fee on total instant withdrawal amount.
+     * @notice Calculate fee on total flash withdrawal amount.
      * @param asset The asset address.
      * @param amount The total withdrawal amount.
      * @return The fee amount.
@@ -242,8 +265,20 @@ abstract contract VaultFeeUpgradeable is Initializable {
         virtual
         returns (uint256)
     {
-        // todo: create a new redemption type
-        // temporarily using INSTANT_WITHDRAWAL fee
         return _calculateFee(asset, amount, IVariableVaultFee.FeeOperation.FLASH_REDEEM, false);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                      PRIVATE READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Returns a reference to the VaultFeeStorage struct.
+     * @return $ Reference to the VaultFeeStorage struct.
+     */
+    function _getVaultFeeStorage() private pure returns (VaultFeeStorage storage $) {
+        assembly {
+            $.slot := VaultFeeStorageLocation
+        }
     }
 }

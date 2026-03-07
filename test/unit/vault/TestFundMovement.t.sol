@@ -100,7 +100,7 @@ contract TestFundMovement is BaseTest {
     function test_whitelistFundTransferRecipient_Reverts_WithZeroAddress() public {
         vm.startPrank(users.admin);
 
-        vm.expectRevert(FundMovementHelperUpgradeable.AddressZero.selector);
+        vm.expectRevert(FundMovementHelperUpgradeable.FundMovementHelper__AddressZero.selector);
         depositVault.whitelistFundTransferRecipient(address(0), true);
 
         assertFalse(depositVault.isRecipientWhitelisted(address(0)), "Zero address should be whitelisted");
@@ -114,7 +114,7 @@ contract TestFundMovement is BaseTest {
         depositVault.whitelistFundTransferRecipient(recipient1, true);
 
         // Try to set to true again - should revert
-        vm.expectRevert(FundMovementHelperUpgradeable.NoChangeInWhitelistStatus.selector);
+        vm.expectRevert(FundMovementHelperUpgradeable.FundMovementHelper__NoChangeInWhitelistStatus.selector);
         depositVault.whitelistFundTransferRecipient(recipient1, true);
 
         vm.stopPrank();
@@ -124,7 +124,7 @@ contract TestFundMovement is BaseTest {
         vm.startPrank(users.admin);
 
         // User is already false by default, trying to set false again should revert
-        vm.expectRevert(FundMovementHelperUpgradeable.NoChangeInWhitelistStatus.selector);
+        vm.expectRevert(FundMovementHelperUpgradeable.FundMovementHelper__NoChangeInWhitelistStatus.selector);
         depositVault.whitelistFundTransferRecipient(recipient1, false);
 
         vm.stopPrank();
@@ -133,7 +133,7 @@ contract TestFundMovement is BaseTest {
     function test_whitelistFundTransferRecipient_RevertsWhen_UnauthorizedUser() public {
         vm.startPrank(unauthorizedUser);
 
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.whitelistFundTransferRecipient(recipient1, true);
 
         vm.stopPrank();
@@ -142,7 +142,7 @@ contract TestFundMovement is BaseTest {
     function test_whitelistFundTransferRecipient_RevertsWhen_CalledByNonAdmin() public {
         vm.startPrank(users.alice);
 
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.whitelistFundTransferRecipient(recipient1, true);
 
         vm.stopPrank();
@@ -230,7 +230,7 @@ contract TestFundMovement is BaseTest {
         // Whitelist recipient
         depositVault.whitelistFundTransferRecipient(recipient1, true);
 
-        vm.expectRevert(FundMovementHelperUpgradeable.AmountZero.selector);
+        vm.expectRevert(FundMovementHelperUpgradeable.FundMovementHelper__AmountZero.selector);
         depositVault.removeFunds(0, recipient1);
 
         vm.stopPrank();
@@ -239,7 +239,7 @@ contract TestFundMovement is BaseTest {
     function test_removeFunds_RevertsWhen_RecipientNotWhitelisted() public {
         vm.startPrank(users.admin);
 
-        vm.expectRevert(FundMovementHelperUpgradeable.RecipientNotWhitelisted.selector);
+        vm.expectRevert(FundMovementHelperUpgradeable.FundMovementHelper__RecipientNotWhitelisted.selector);
         depositVault.removeFunds(getQuantizedValue(1000), recipient1);
 
         vm.stopPrank();
@@ -268,7 +268,7 @@ contract TestFundMovement is BaseTest {
 
         vm.startPrank(unauthorizedUser);
 
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.removeFunds(getQuantizedValue(1000), recipient1);
 
         vm.stopPrank();
@@ -281,7 +281,7 @@ contract TestFundMovement is BaseTest {
 
         vm.startPrank(users.alice);
 
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.removeFunds(getQuantizedValue(1000), recipient1);
 
         vm.stopPrank();
@@ -297,7 +297,7 @@ contract TestFundMovement is BaseTest {
         depositVault.whitelistFundTransferRecipient(recipient1, false);
 
         // Now try to transfer - should fail
-        vm.expectRevert(FundMovementHelperUpgradeable.RecipientNotWhitelisted.selector);
+        vm.expectRevert(FundMovementHelperUpgradeable.FundMovementHelper__RecipientNotWhitelisted.selector);
         depositVault.removeFunds(getQuantizedValue(1000), recipient1);
 
         vm.stopPrank();
@@ -330,7 +330,7 @@ contract TestFundMovement is BaseTest {
         assertFalse(depositVault.isRecipientWhitelisted(recipient1));
 
         // Step 6: Verify can't transfer anymore
-        vm.expectRevert(abi.encodeWithSignature("RecipientNotWhitelisted()"));
+        vm.expectRevert(abi.encodeWithSignature("FundMovementHelper__RecipientNotWhitelisted()"));
         depositVault.removeFunds(getQuantizedValue(100), recipient1);
 
         vm.stopPrank();
@@ -367,7 +367,7 @@ contract TestFundMovement is BaseTest {
         depositVault.removeFunds(getQuantizedValue(100), users.alice);
 
         // Verify middle recipient fails
-        vm.expectRevert(abi.encodeWithSignature("RecipientNotWhitelisted()"));
+        vm.expectRevert(abi.encodeWithSignature("FundMovementHelper__RecipientNotWhitelisted()"));
         depositVault.removeFunds(getQuantizedValue(100), recipient2);
 
         vm.stopPrank();

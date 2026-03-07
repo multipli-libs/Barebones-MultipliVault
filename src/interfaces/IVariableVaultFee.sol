@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity 0.8.30;
+pragma solidity ^0.8.30;
 
 /**
  * @title IVariableVaultFee
@@ -8,7 +7,10 @@ pragma solidity 0.8.30;
  * @dev Supports both flat and percentage-based fees for deposits and withdrawals
  */
 interface IVariableVaultFee {
-    // Enums
+    /*//////////////////////////////////////////////////////////////
+                           TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
+
     enum FeeType {
         FLAT,
         PERCENTAGE
@@ -21,7 +23,6 @@ interface IVariableVaultFee {
         FLASH_REDEEM
     }
 
-    // Structs
     struct FeeConfig {
         FeeType feeType;
         uint256 feeAmount; // Either percentage (1e17 = 10%) or flat amount (e.g., 100e18)
@@ -35,7 +36,10 @@ interface IVariableVaultFee {
         address feeRecipient;
     }
 
-    // Events
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
     event RegisterAsset(address indexed user, address indexed asset, AssetFeeConfig config);
     event DeregisterAsset(address indexed user, address indexed asset);
     event UpdateAssetFeeConfig(
@@ -45,23 +49,28 @@ interface IVariableVaultFee {
         AssetFeeConfig newConfig
     );
 
-    // Errors
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
     /// @notice Thrown when an invalid asset address is provided or asset is not registered
-    error InvalidAsset();
+    error IVariableVaultFee__InvalidAsset();
 
     /// @notice Thrown when asset configuration parameters are invalid
-    error InvalidAssetConfig();
+    error IVariableVaultFee__InvalidAssetConfig();
 
     /// @notice Thrown when attempting to register an asset that is already registered
-    error AssetAlreadyRegistered();
+    error IVariableVaultFee__AssetAlreadyRegistered();
 
     /// @notice Thrown when amount is insufficient for the operation
-    error ZeroAmount();
+    error IVariableVaultFee__ZeroAmount();
 
     /// @notice Thrown when amount is insufficient for the operation
-    error InsufficientAmount();
+    error IVariableVaultFee__InsufficientAmount();
 
-    // View Functions
+    /*//////////////////////////////////////////////////////////////
+                           EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Calculate fee on raw amount (amount without fees included)

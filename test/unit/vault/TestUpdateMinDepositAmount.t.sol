@@ -18,7 +18,7 @@ contract TestUpdateMinDepositAmount is BaseTest {
     function test_updateMinDepositAmount__Reverts_onAuthorizedUserAccess() public {
         assertEq(depositVault.minDepositAmount(), 0, "Initial sanity check failed");
 
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.updateMinDepositAmount(getQuantizedValue(10));
     }
 

@@ -1,18 +1,27 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity ^0.8.30;
 
 /**
  * @title Compatible
  * @notice Abstract contract that allows the contract to receive Ether and ERC721/1155 tokens.
  * @dev Implements `receive()` to accept Ether, and ERC721/1155 hooks for token reception.
+ * @custom:security-contact security@multipli.com
  */
 abstract contract Compatible {
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
     /**
      * @notice Emitted when the contract receives Ether.
      * @param sender The address that sent the Ether.
      * @param amount The amount of Ether received.
      */
     event Received(address sender, uint256 amount);
+
+    /*//////////////////////////////////////////////////////////////
+                           RECEIVE / FALLBACK
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Receive Ether and emit a `Received` event.
@@ -21,6 +30,10 @@ abstract contract Compatible {
     receive() external payable {
         emit Received(msg.sender, msg.value);
     }
+
+    /*//////////////////////////////////////////////////////////////
+                    USER-FACING READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Handle the receipt of a single ERC721 token type.

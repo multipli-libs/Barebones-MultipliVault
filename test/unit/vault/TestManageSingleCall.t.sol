@@ -34,7 +34,7 @@ contract ManageSingleCall_Unit_Concrete_Test is BaseTest {
 
     function test_ManageSingleCall_RevertOnUnauthorizedUser() public {
         vm.startPrank({msgSender: users.bob}); // Stop acting as the owner
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.manage(mockTarget, data, value);
     }
 
@@ -44,7 +44,7 @@ contract ManageSingleCall_Unit_Concrete_Test is BaseTest {
             ADMIN_ROLE, mockTarget, targetfunctionSig, false
         );
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.TargetMethodNotAuthorized.selector, mockTarget, targetfunctionSig)
+            abi.encodeWithSelector(Errors.Errors__TargetMethodNotAuthorized.selector, mockTarget, targetfunctionSig)
         );
         depositVault.manage(mockTarget, data, value);
     }

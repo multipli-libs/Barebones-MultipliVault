@@ -27,7 +27,7 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
 
     function test_RemoveFundsNative_RevertsWhenNotCalledByVault() public {
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.removeFundsNative(recipient1, TEST_NATIVE_AMOUNT);
     }
 
@@ -39,7 +39,7 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
         );
 
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.ZeroAddress.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAddress.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -51,7 +51,7 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
         );
 
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.ZeroAmount.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAmount.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -66,7 +66,7 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
         );
 
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.InsufficientBalance.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__InsufficientBalance.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -82,7 +82,7 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
         );
 
         vm.startPrank(users.alice);
-        vm.expectRevert(abi.encodeWithSignature("TargetMethodNotAuthorized(address,bytes4)", address(fundManager), bytes4(fundManager.removeFundsNative.selector)));
+        vm.expectRevert(abi.encodeWithSignature("Errors__TargetMethodNotAuthorized(address,bytes4)", address(fundManager), bytes4(fundManager.removeFundsNative.selector)));
         vault.manage(address(fundManager), data, 0);
 
         // Check balances remain unchanged
@@ -102,7 +102,7 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
         );
 
         vm.startPrank(users.bob);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         vault.manage(address(fundManager), data, 0);
 
         // Check balances remain unchanged
@@ -287,7 +287,7 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
         );
 
         vm.startPrank(users.admin);
-        vm.expectRevert("Transfer failed");
+        vm.expectRevert(abi.encodeWithSignature("VaultFundManager__TransferFailed()"));
         vault.manage(address(fundManager), data, 0);
     }
 

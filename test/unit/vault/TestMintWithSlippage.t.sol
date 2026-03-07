@@ -71,7 +71,7 @@ contract TestMintWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.ExcessiveAssetsRequired.selector, expectedAssets, maxAssets)
+            abi.encodeWithSelector(Errors.Errors__ExcessiveAssetsRequired.selector, expectedAssets, maxAssets)
         );
         depositVault.mint(shares, users.alice, maxAssets);
         vm.stopPrank();
@@ -87,7 +87,7 @@ contract TestMintWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.ExcessiveAssetsRequired.selector, expectedIncreasedAssets, maxAssets)
+            abi.encodeWithSelector(Errors.Errors__ExcessiveAssetsRequired.selector, expectedIncreasedAssets, maxAssets)
         );
         depositVault.mint(increasedShares, users.alice, maxAssets); // use increased shares
         vm.stopPrank();
@@ -125,7 +125,7 @@ contract TestMintWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.DepositAmountLessThanThreshold.selector, expectedAssets, minDepositAmount)
+            abi.encodeWithSelector(Errors.Errors__DepositAmountLessThanThreshold.selector, expectedAssets, minDepositAmount)
         );
         depositVault.mint(shares, users.alice, maxAssets);
         vm.stopPrank();
@@ -139,7 +139,7 @@ contract TestMintWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.ExcessiveAssetsRequired.selector, shares, maxAssets) // Will require getQuantizedValue(100); assets
+            abi.encodeWithSelector(Errors.Errors__ExcessiveAssetsRequired.selector, shares, maxAssets) // Will require getQuantizedValue(100); assets
         );
         depositVault.mint(shares, users.alice, maxAssets);
         vm.stopPrank();
@@ -175,7 +175,7 @@ contract TestMintWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.ExcessiveAssetsRequired.selector, shares, maxAssets)
+            abi.encodeWithSelector(Errors.Errors__ExcessiveAssetsRequired.selector, shares, maxAssets)
         );
         depositVault.mint(shares, users.alice, maxAssets);
         vm.stopPrank();
@@ -206,7 +206,7 @@ contract TestMintWithSlippage is BaseTest {
 
         vm.startPrank(users.bob);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.ExcessiveAssetsRequired.selector, expectedAssets, maxAssets)
+            abi.encodeWithSelector(Errors.Errors__ExcessiveAssetsRequired.selector, expectedAssets, maxAssets)
         );
         uint256 actualAssets = depositVault.mint(shares, users.bob, maxAssets);
         vm.stopPrank();
@@ -387,7 +387,7 @@ contract TestMintWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.ExcessiveAssetsRequired.selector, expectedAssets, maxAssets)
+            abi.encodeWithSelector(Errors.Errors__ExcessiveAssetsRequired.selector, expectedAssets, maxAssets)
         );
         depositVault.mint(shares, users.alice, maxAssets);
         vm.stopPrank();

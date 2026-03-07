@@ -29,13 +29,13 @@ contract TestDeregisterAsset is FeeBase {
 
     function testDeregisterAssetRevertsIfAssetNotRegistered() public {
         vm.startPrank(naruto);
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.deregisterAsset(address(token));
     }
 
     function testDeregisterAssetRevertsIfZeroAddress() public {
         vm.startPrank(naruto);
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.deregisterAsset(address(0));
     }
 

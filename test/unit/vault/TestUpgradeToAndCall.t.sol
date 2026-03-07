@@ -54,7 +54,7 @@ contract TestUpgradeToAndCall is BaseTest {
     function test_upgradeToAndCall_FailsWhenCalledByUnAuthorizedUser () public {
         vm.startPrank(users.alice);
         address newImpl = address(new MockMultipliVaultV2());
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.upgradeToAndCall(newImpl, "");
         vm.stopPrank();
     }

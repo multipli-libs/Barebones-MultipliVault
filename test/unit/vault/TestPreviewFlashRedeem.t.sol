@@ -84,7 +84,7 @@ contract TestPreviewFlashRedeem is BaseTest {
     function test_previewFlashRedeem_Reverts_OnZeroShares() public {
         uint256 shareAmount = 0;
 
-        vm.expectRevert(abi.encodeWithSelector(IVariableVaultFee.ZeroAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(IVariableVaultFee.IVariableVaultFee__ZeroAmount.selector));
         depositVault.previewFlashRedeem(shareAmount);
 
     }

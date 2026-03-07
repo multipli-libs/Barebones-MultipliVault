@@ -22,7 +22,7 @@ contract TestMint is BaseTest {
         vm.startPrank(users.alice);
 
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.DepositAmountLessThanThreshold.selector, shares, minDepositAmount)
+            abi.encodeWithSelector(Errors.Errors__DepositAmountLessThanThreshold.selector, shares, minDepositAmount)
         );
         depositVault.mint(shares, users.alice);
 

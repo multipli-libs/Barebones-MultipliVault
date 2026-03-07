@@ -51,7 +51,7 @@ contract OnUnderlyingBalanceUpdate_Unit_Concrete_Test is BaseTest {
         uint256 amount = 100 * getQuantizedValue(1);
         depositVault.deposit(amount, users.alice);
 
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.onUnderlyingBalanceUpdate(0);
     }
 
@@ -62,7 +62,7 @@ contract OnUnderlyingBalanceUpdate_Unit_Concrete_Test is BaseTest {
         vm.stopPrank();
         vm.startPrank({msgSender: users.admin});
         depositVault.onUnderlyingBalanceUpdate(getQuantizedValue(1));
-        vm.expectRevert(abi.encodeWithSelector(Errors.UpdateAlreadyCompletedInThisBlock.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__UpdateAlreadyCompletedInThisBlock.selector));
         depositVault.onUnderlyingBalanceUpdate(getQuantizedValue(1));
     }
 }

@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity ^0.8.30;
 
 /**
- * @title MultipliVault
+ * @title IMultipliVault
  * @notice Interface for the Multipli vault
  * @dev Defines events and functions related to redeem requests, fee updates, and balance tracking.
  */
 interface IMultipliVault {
+    /*//////////////////////////////////////////////////////////////
+                           TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
+
     /**
      * @dev Structure to store pending redeem requests.
      * @param assets The amount of assets to be redeemed.
@@ -16,6 +20,10 @@ interface IMultipliVault {
         uint256 assets;
         uint256 shares;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Emitted when the withdraw fee is updated.
@@ -118,6 +126,10 @@ interface IMultipliVault {
      */
     event RequestCancelled(address indexed receiver, uint256 shares, uint256 assets);
 
+    /*//////////////////////////////////////////////////////////////
+                           EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
     /**
      * @notice Requests a redeem operation for the specified shares.
      * @param shares The number of shares to redeem.
@@ -156,6 +168,7 @@ interface IMultipliVault {
      * @param operator The contract that will handle position unwinding on Euler
      * @param receiver The address that will receive the USDC (usually the user)
      * @param shares The amount of shares to redeem (total position size)
+     * @param assetsWithFee The amount of assets including fees
      * @param data Additional data for the operator callback
      */
     function flashRedeem(

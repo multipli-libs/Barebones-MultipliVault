@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity ^0.8.30;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -22,21 +22,28 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 abstract contract FundMovementHelperUpgradeable is Initializable {
     using SafeERC20 for IERC20;
 
-    //============================== ERRORS ===============================
+    /*//////////////////////////////////////////////////////////////
+                           TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
 
-    /// @notice Thrown when attempting to set the same whitelist status for a user
-    error NoChangeInWhitelistStatus();
+    /// @custom:storage-location erc7201:multipli.storage.FundMovementHelperStorage
+    struct FundMovementHelperStorage {
+        /// @dev Mapping to track whitelisted fund transfer recipients
+        mapping(address => bool) whitelistedRecipients;
+    }
 
-    /// @notice Thrown when attempting to transfer zero amount
-    error AmountZero();
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
 
-    /// @notice Thrown when attempting to transfer to a non-whitelisted recipient
-    error RecipientNotWhitelisted();
+    // Storage slot for the FundMovementHelperStorage struct.
+    // keccak256(abi.encode(uint256(keccak256("multipli.storage.FundMovementHelperStorage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant FUND_MOVEMENT_STORAGE_LOCATION =
+        0x2bbdf87c296f0fc445d947563c77d7b805fc738a2e220084769a264d45deaf00;
 
-    /// @notice Thrown when address is 0 (address(0))
-    error AddressZero();
-
-    //============================== EVENTS ===============================
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Emitted when funds are removed from the contract
@@ -59,20 +66,39 @@ abstract contract FundMovementHelperUpgradeable is Initializable {
         address indexed initiator, address indexed recipient, bool isWhitelisted
     );
 
-    //============================== STORAGE ===============================
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
 
-    /// @custom:storage-location erc7201:multipli.storage.FundMovementHelperStorage
-    struct FundMovementHelperStorage {
-        /// @dev Mapping to track whitelisted fund transfer recipients
-        mapping(address => bool) whitelistedRecipients;
+    /// @notice Thrown when attempting to set the same whitelist status for a user
+    error FundMovementHelper__NoChangeInWhitelistStatus();
+
+    /// @notice Thrown when attempting to transfer zero amount
+    error FundMovementHelper__AmountZero();
+
+    /// @notice Thrown when attempting to transfer to a non-whitelisted recipient
+    error FundMovementHelper__RecipientNotWhitelisted();
+
+    /// @notice Thrown when address is 0 (address(0))
+    error FundMovementHelper__AddressZero();
+
+    /*//////////////////////////////////////////////////////////////
+                    USER-FACING READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Checks if a user is whitelisted as a fund transfer recipient
+     * @param user The address to check
+     * @return isWhitelisted True if the user is whitelisted, false otherwise
+     */
+    function isRecipientWhitelisted(address user) public view returns (bool isWhitelisted) {
+        FundMovementHelperStorage storage $ = _getFundMovementHelperStorage();
+        return $.whitelistedRecipients[user];
     }
 
-    // Storage slot for the FundMovementHelperStorage struct.
-    // keccak256(abi.encode(uint256(keccak256("multipli.storage.FundMovementHelperStorage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant FUND_MOVEMENT_STORAGE_LOCATION =
-        0x2bbdf87c296f0fc445d947563c77d7b805fc738a2e220084769a264d45deaf00;
-
-    //============================== INITIALIZER ===============================
+    /*//////////////////////////////////////////////////////////////
+                      INTERNAL STATE-CHANGING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Initializes the FundMovementHelper contract
@@ -90,20 +116,6 @@ abstract contract FundMovementHelperUpgradeable is Initializable {
         // No initialization logic needed currently
     }
 
-    //============================== VIEW FUNCTIONS ===============================
-
-    /**
-     * @notice Checks if a user is whitelisted as a fund transfer recipient
-     * @param user The address to check
-     * @return isWhitelisted True if the user is whitelisted, false otherwise
-     */
-    function isRecipientWhitelisted(address user) public view returns (bool isWhitelisted) {
-        FundMovementHelperStorage storage $ = _getFundMovementHelperStorage();
-        return $.whitelistedRecipients[user];
-    }
-
-    //============================== INTERNAL FUNCTIONS ===============================
-
     /**
      * @notice Updates the whitelist status of a fund transfer recipient
      * @dev This method is expected to be called from the inheriting contract with proper access controls
@@ -114,11 +126,11 @@ abstract contract FundMovementHelperUpgradeable is Initializable {
         FundMovementHelperStorage storage $ = _getFundMovementHelperStorage();
 
         if (user == address(0)) {
-            revert AddressZero();
+            revert FundMovementHelper__AddressZero();
         }
 
         if ($.whitelistedRecipients[user] == isWhitelisted) {
-            revert NoChangeInWhitelistStatus();
+            revert FundMovementHelper__NoChangeInWhitelistStatus();
         }
 
         $.whitelistedRecipients[user] = isWhitelisted;
@@ -134,17 +146,19 @@ abstract contract FundMovementHelperUpgradeable is Initializable {
      */
     function _removeFunds(address asset, uint256 amount, address recipient) internal virtual {
         if (amount == 0) {
-            revert AmountZero();
+            revert FundMovementHelper__AmountZero();
         }
         if (!isRecipientWhitelisted(recipient)) {
-            revert RecipientNotWhitelisted();
+            revert FundMovementHelper__RecipientNotWhitelisted();
         }
 
         IERC20(asset).safeTransfer(recipient, amount);
         emit FundsRemoved(msg.sender, asset, amount, recipient);
     }
 
-    //============================== PRIVATE FUNCTIONS ===============================
+    /*//////////////////////////////////////////////////////////////
+                      PRIVATE READ-ONLY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @dev Returns a reference to the FundMovementHelperStorage struct

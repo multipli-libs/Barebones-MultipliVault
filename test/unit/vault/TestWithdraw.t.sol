@@ -17,7 +17,7 @@ contract Withdraw_Unit_Concrete_Test is BaseTest {
     }
 
     function testWithdrawReverts() public {
-        vm.expectRevert(abi.encodeWithSelector(Errors.UseRequestRedeem.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__UseRequestRedeem.selector));
         depositVault.withdraw(amount, users.alice, users.alice);
     }
 }

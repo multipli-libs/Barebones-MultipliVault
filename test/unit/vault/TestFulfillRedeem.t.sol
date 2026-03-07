@@ -68,17 +68,17 @@ contract TestFulfillRedeem is BaseTest {
         (uint256 pendingAssets, uint256 pendingShares) = depositVault.pendingRedeemRequest(users.alice);
         depositVault.fulfillRedeem(users.alice, pendingShares, pendingAssets);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSharesAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidSharesAmount.selector));
         depositVault.fulfillRedeem(users.alice, pendingShares, pendingAssets);
     }
 
     function testFulfillRedeem__revertsOnInvalidAmounts() public {
         vm.startPrank({msgSender: users.admin});
         (uint256 pendingAssets, uint256 pendingShares) = depositVault.pendingRedeemRequest(users.alice);
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSharesAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidSharesAmount.selector));
         depositVault.fulfillRedeem(users.alice, pendingShares + 1, pendingAssets);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAssetsAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidAssetsAmount.selector));
         depositVault.fulfillRedeem(users.alice, pendingShares, pendingAssets + 1);
     }
 

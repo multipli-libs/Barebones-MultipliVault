@@ -158,30 +158,30 @@ contract TestFeeOnRaw is FeeBase {
     }
 
     function testFeeOnRawRevertsIfAssetIsZero() public {
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.feeOnRaw(address(0), getQuantizedValue(100), IVariableVaultFee.FeeOperation.DEPOSIT);
 
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.feeOnRaw(address(0), getQuantizedValue(100), IVariableVaultFee.FeeOperation.WITHDRAWAL);
 
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.feeOnRaw(address(0), getQuantizedValue(100), IVariableVaultFee.FeeOperation.INSTANT_WITHDRAWAL);
 
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.feeOnRaw(address(0), getQuantizedValue(100), IVariableVaultFee.FeeOperation.FLASH_REDEEM);
     }
 
     function testFeeOnRawRevertsIfAssetNotRegistered() public {
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.feeOnRaw(address(token), getQuantizedValue(100), IVariableVaultFee.FeeOperation.DEPOSIT);
         
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.feeOnRaw(address(token), getQuantizedValue(100), IVariableVaultFee.FeeOperation.WITHDRAWAL);
 
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.feeOnRaw(address(token), getQuantizedValue(100), IVariableVaultFee.FeeOperation.INSTANT_WITHDRAWAL);
 
-        vm.expectRevert(IVariableVaultFee.InvalidAsset.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__InvalidAsset.selector);
         feeContract.feeOnRaw(address(token), getQuantizedValue(100), IVariableVaultFee.FeeOperation.FLASH_REDEEM);
     }
 
@@ -201,16 +201,16 @@ contract TestFeeOnRaw is FeeBase {
         vm.prank(naruto);
         feeContract.registerAsset(address(token), _config);
 
-        vm.expectRevert(IVariableVaultFee.ZeroAmount.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__ZeroAmount.selector);
         feeContract.feeOnRaw(address(token), 0, IVariableVaultFee.FeeOperation.DEPOSIT);
 
-        vm.expectRevert(IVariableVaultFee.ZeroAmount.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__ZeroAmount.selector);
         feeContract.feeOnRaw(address(token), 0, IVariableVaultFee.FeeOperation.WITHDRAWAL);
 
-        vm.expectRevert(IVariableVaultFee.ZeroAmount.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__ZeroAmount.selector);
         feeContract.feeOnRaw(address(token), 0, IVariableVaultFee.FeeOperation.INSTANT_WITHDRAWAL);
         
-        vm.expectRevert(IVariableVaultFee.ZeroAmount.selector);
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__ZeroAmount.selector);
         feeContract.feeOnRaw(address(token), 0, IVariableVaultFee.FeeOperation.FLASH_REDEEM);
     }
 

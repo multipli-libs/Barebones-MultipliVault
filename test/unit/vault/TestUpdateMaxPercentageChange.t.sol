@@ -19,13 +19,13 @@ contract TestUpdateMaxPercentageChange is BaseTest {
     }
 
     function testUpdateMaxPercentageChange__RevertsIfNewValueIsGreaterThanMaxThreshold() public {
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidMaxPercentage.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__InvalidMaxPercentage.selector));
         depositVault.updateMaxPercentageChange(MAX_PERCENTAGE_THRESHOLD);
     }
 
     function testUpdateMaxPercentageChange__RevertsWhenCalledByNotAuthorizedUser() public {
         vm.stopPrank();
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.updateMaxPercentageChange(1e16);
     }
 }

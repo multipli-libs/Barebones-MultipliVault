@@ -16,7 +16,7 @@ contract TestRemoveFundsFromVault is VaultFundManagerBase {
 
     function test_RemoveFundsFromVault_RevertsWhenNotCalledByVault() public {
         vm.startPrank(users.alice);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.removeFundsFromVault(recipient1, TEST_TRANSFER_AMOUNT);
     }
 
@@ -25,7 +25,7 @@ contract TestRemoveFundsFromVault is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.removeFundsFromVault.selector, address(0), TEST_TRANSFER_AMOUNT);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(VaultFundManager.ZeroAddress.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAddress.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -33,7 +33,7 @@ contract TestRemoveFundsFromVault is VaultFundManagerBase {
         bytes memory data = abi.encodeWithSelector(fundManager.removeFundsFromVault.selector, recipient1, 0);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(VaultFundManager.ZeroAmount.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAmount.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -45,7 +45,7 @@ contract TestRemoveFundsFromVault is VaultFundManagerBase {
             abi.encodeWithSelector(fundManager.removeFundsFromVault.selector, recipient1, excessiveAmount);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(VaultFundManager.InsufficientBalance.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__InsufficientBalance.selector);
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -55,7 +55,7 @@ contract TestRemoveFundsFromVault is VaultFundManagerBase {
         );
 
         vm.startPrank(users.alice);
-        vm.expectRevert(abi.encodeWithSignature("RecipientNotWhitelisted()")); // Should revert due to non-whitelisted recipient
+        vm.expectRevert(abi.encodeWithSignature("FundMovementHelper__RecipientNotWhitelisted()")); // Should revert due to non-whitelisted recipient
         vault.manage(address(fundManager), data, 0);
     }
 
@@ -192,7 +192,7 @@ contract TestRemoveFundsFromVault is VaultFundManagerBase {
         bytes memory data2 =
             abi.encodeWithSelector(fundManager.removeFundsFromVault.selector, recipient2, secondTransfer);
 
-        vm.expectRevert(abi.encodeWithSignature("UpdateAlreadyCompletedInThisBlock()"));
+        vm.expectRevert(abi.encodeWithSignature("Errors__UpdateAlreadyCompletedInThisBlock()"));
         vault.manage(address(fundManager), data2, 0);
 
         // only first manage call works

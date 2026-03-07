@@ -31,21 +31,21 @@ contract TestAdminMintSingle is MigratorBaseTest {
 
     function test__adminMintSingle__Reverts__UnAuthorized() public {
         vm.startPrank(users.alice);
-        vm.expectRevert(MultipliMigrator.UnAuthorized.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__UnAuthorized.selector);
         migrator.adminMintSingle(MIGRATION_ID, users.alice, ASSETS_AMOUNT, MIN_SHARES);
         vm.stopPrank();
     }
 
     function test__adminMintSingle__Reverts__InvalidReceiverAddress() public {
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.InvalidAddress.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__InvalidAddress.selector);
         migrator.adminMintSingle(MIGRATION_ID, address(0), ASSETS_AMOUNT, MIN_SHARES);
         vm.stopPrank();
     }
 
     function test__adminMintSingle__Reverts__ZeroAmount() public {
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.ZeroAmount.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__ZeroAmount.selector);
         migrator.adminMintSingle(MIGRATION_ID, users.alice, 0, MIN_SHARES);
         vm.stopPrank();
     }
@@ -58,7 +58,7 @@ contract TestAdminMintSingle is MigratorBaseTest {
 
         // Try to use same ID again
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.IDAlreadyExists.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__IDAlreadyExists.selector);
         migrator.adminMintSingle(MIGRATION_ID, users.bob, ASSETS_AMOUNT, MIN_SHARES);
         vm.stopPrank();
     }
@@ -70,7 +70,7 @@ contract TestAdminMintSingle is MigratorBaseTest {
 
         vm.startPrank(operator);
         vm.expectRevert(abi.encodeWithSelector(
-            MultipliMigrator.InsufficientSharesReceived.selector,
+            MultipliMigrator.MultipliMigrator__InsufficientSharesReceived.selector,
             shares, // (error will have the shares that previewRedeem spits out)
             highMinShares
         ));
@@ -84,7 +84,7 @@ contract TestAdminMintSingle is MigratorBaseTest {
         migrator.adminMintSingle(MIGRATION_ID, users.alice, ASSETS_AMOUNT, MIN_SHARES);
 
         // Try second migration in same block (should fail due to vault's one-per-block limit)
-        vm.expectRevert("UpdateAlreadyCompletedInThisBlock()");
+        vm.expectRevert("Errors__UpdateAlreadyCompletedInThisBlock()");
         migrator.adminMintSingle(MIGRATION_ID + 1, users.bob, ASSETS_AMOUNT, MIN_SHARES);
         vm.stopPrank();
     }

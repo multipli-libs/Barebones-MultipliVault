@@ -33,7 +33,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
         minShares[0] = getQuantizedValue(90);
 
         vm.startPrank(users.alice);
-        vm.expectRevert(MultipliMigrator.UnAuthorized.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__UnAuthorized.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
     }
@@ -45,7 +45,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
         uint256[] memory minShares = new uint256[](0);
 
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.InvalidBatchSize.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__InvalidBatchSize.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
     }
@@ -59,7 +59,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
         uint256[] memory minShares = new uint256[](oversizedBatch);
 
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.InvalidBatchSize.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__InvalidBatchSize.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
     }
@@ -71,7 +71,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
         uint256[] memory minShares = new uint256[](2);
 
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.ArrayLengthsMismatch.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__ArrayLengthsMismatch.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
     }
@@ -83,7 +83,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
         uint256[] memory minShares = new uint256[](2);
 
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.ArrayLengthsMismatch.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__ArrayLengthsMismatch.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
     }
@@ -95,7 +95,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
         uint256[] memory minShares = new uint256[](3); // Different length
 
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.ArrayLengthsMismatch.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__ArrayLengthsMismatch.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
     }
@@ -116,7 +116,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
         minShares[1] = getQuantizedValue(90);
 
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.IDAlreadyExists.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__IDAlreadyExists.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
     }
@@ -134,7 +134,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
 
         vm.startPrank(operator);
         vm.expectRevert(abi.encodeWithSelector(
-            MultipliMigrator.InsufficientSharesReceived.selector,
+            MultipliMigrator.MultipliMigrator__InsufficientSharesReceived.selector,
             getQuantizedValue(100), // Expected shares (1:1 ratio)
             getQuantizedValue(1000) // Min shares required
         ));
@@ -364,7 +364,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
 
 
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.InvalidAddress.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__InvalidAddress.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
 
@@ -395,7 +395,7 @@ contract TestAdminMintBatch is MigratorBaseTest {
         minShares[1] = 0;
 
         vm.startPrank(operator);
-        vm.expectRevert(MultipliMigrator.ZeroAmount.selector);
+        vm.expectRevert(MultipliMigrator.MultipliMigrator__ZeroAmount.selector);
         migrator.adminMintBatch(ids, receivers, assets, minShares);
         vm.stopPrank();
     }

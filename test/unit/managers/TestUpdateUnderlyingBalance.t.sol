@@ -46,7 +46,7 @@ contract TestUpdateUnderlyingBalance is VaultFundManagerBase {
 
     function test__updateUnderlyingBalance__RevertsWhenCalledByNonVaultAddress() public {
         vm.startPrank(users.admin);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.updateUnderlyingBalance(0, 0);
     }
 
@@ -65,7 +65,7 @@ contract TestUpdateUnderlyingBalance is VaultFundManagerBase {
 
         
         vm.startPrank(user);
-        vm.expectRevert(abi.encodeWithSelector(Errors.TargetMethodNotAuthorized.selector, address(fundManager), updateUnderlyingBalanceSignature));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__TargetMethodNotAuthorized.selector, address(fundManager), updateUnderlyingBalanceSignature));
         vault.manage(target, data, 0);
 
         vm.stopPrank();
@@ -84,7 +84,7 @@ contract TestUpdateUnderlyingBalance is VaultFundManagerBase {
         bytes memory data = abi.encodeWithSelector(VaultFundManager.updateUnderlyingBalance.selector, oldBalance, newBalance);
 
         vm.startPrank(user);
-        vm.expectRevert(VaultFundManager.AggregatedBalanceMismatch.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__AggregatedBalanceMismatch.selector);
         vault.manage(target, data, 0);
         vm.stopPrank();
 

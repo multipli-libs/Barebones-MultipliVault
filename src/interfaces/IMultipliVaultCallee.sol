@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.30;
+pragma solidity ^0.8.30;
 
 interface IMultipliVaultCallee {
     /// @notice This function is called by the Multipli vault, which sends in flash

@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.30;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
@@ -12,7 +11,16 @@ interface IMultipliVault {
     function onUnderlyingBalanceUpdate(uint256 newAggregatedBalance) external;
 }
 
+/**
+ * @title MultipliMigrator
+ * @notice Enables secure and atomic migration of user balances from v1 to v2 vault
+ * @custom:security-contact security@multipli.com
+ */
 contract MultipliMigrator is Ownable, ReentrancyGuard {
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
+
     // todo: what is a rational batch size
     uint256 public constant MAX_BATCH_SIZE = 10;
 
@@ -20,14 +28,9 @@ contract MultipliMigrator is Ownable, ReentrancyGuard {
     mapping(uint256 => bool) public migrationID;
     mapping(address => bool) public allowList;
 
-    error InvalidAddress();
-    error InvalidBatchSize();
-    error ZeroAmount();
-    error UnAuthorized();
-    error IDAlreadyExists();
-    error AggregateBalanceMismatch();
-    error InsufficientSharesReceived(uint256 shares, uint256 minShares);
-    error ArrayLengthsMismatch();
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
 
     event UpdateAllowList(address user, bool enable);
     event UserMigrated(uint256 newAggregatedBalance);
@@ -42,24 +45,49 @@ contract MultipliMigrator is Ownable, ReentrancyGuard {
         uint256 newAggregatedBalance
     );
 
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    error MultipliMigrator__InvalidAddress();
+    error MultipliMigrator__InvalidBatchSize();
+    error MultipliMigrator__ZeroAmount();
+    error MultipliMigrator__UnAuthorized();
+    error MultipliMigrator__IDAlreadyExists();
+    error MultipliMigrator__AggregateBalanceMismatch();
+    error MultipliMigrator__InsufficientSharesReceived(uint256 shares, uint256 minShares);
+    error MultipliMigrator__ArrayLengthsMismatch();
+
+    /*//////////////////////////////////////////////////////////////
+                               MODIFIERS
+    //////////////////////////////////////////////////////////////*/
+
+    modifier isAllowed() {
+        if (!allowList[msg.sender]) {
+            revert MultipliMigrator__UnAuthorized();
+        }
+        _;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                              CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
+
     constructor(address _owner, address _vault) Ownable(_owner) {
         if (_vault == address(0)) {
-            revert InvalidAddress();
+            revert MultipliMigrator__InvalidAddress();
         }
 
         vault = IMultipliVault(_vault);
     }
 
-    modifier isAllowed() {
-        if (!allowList[msg.sender]) {
-            revert UnAuthorized();
-        }
-        _;
-    }
+    /*//////////////////////////////////////////////////////////////
+                  USER-FACING STATE-CHANGING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     function updateAllowList(address user, bool enable) external onlyOwner {
         if (user == address(0)) {
-            revert InvalidAddress();
+            revert MultipliMigrator__InvalidAddress();
         }
 
         if (allowList[user] != enable) {
@@ -78,20 +106,14 @@ contract MultipliMigrator is Ownable, ReentrancyGuard {
         nonReentrant
         isAllowed
     {
-        if (receiver == address(0)) {
-            revert InvalidAddress();
-        }
-        if (assets == 0) {
-            revert ZeroAmount();
-        }
-        if (migrationID[id]) {
-            revert IDAlreadyExists();
-        }
+        if (receiver == address(0)) revert MultipliMigrator__InvalidAddress();
+        if (assets == 0) revert MultipliMigrator__ZeroAmount();
+        if (migrationID[id]) revert MultipliMigrator__IDAlreadyExists();
 
         // mint shares to receiver
         uint256 shares = vault.previewDeposit(assets);
         if (shares < minShares) {
-            revert InsufficientSharesReceived(shares, minShares);
+            revert MultipliMigrator__InsufficientSharesReceived(shares, minShares);
         }
         vault.adminMint(receiver, shares);
 
@@ -108,10 +130,10 @@ contract MultipliMigrator is Ownable, ReentrancyGuard {
 
     // todo: optimise this: two for-loops
     function adminMintBatch(
-        uint256[] memory ids,
-        address[] memory receivers,
-        uint256[] memory assets,
-        uint256[] memory minShares
+        uint256[] calldata ids,
+        address[] calldata receivers,
+        uint256[] calldata assets,
+        uint256[] calldata minShares
     )
         public
         nonReentrant
@@ -119,12 +141,16 @@ contract MultipliMigrator is Ownable, ReentrancyGuard {
     {
         uint256 arrayLength = ids.length;
         if (arrayLength == 0 || arrayLength > MAX_BATCH_SIZE) {
-            revert InvalidBatchSize();
+            revert MultipliMigrator__InvalidBatchSize();
         }
 
-        if (!(arrayLength == receivers.length && arrayLength == assets.length
-                    && arrayLength == minShares.length)) {
-            revert ArrayLengthsMismatch();
+        if (
+            !(
+                arrayLength == receivers.length && arrayLength == assets.length
+                    && arrayLength == minShares.length
+            )
+        ) {
+            revert MultipliMigrator__ArrayLengthsMismatch();
         }
 
         uint256 totalAssetsAdded;
@@ -132,27 +158,21 @@ contract MultipliMigrator is Ownable, ReentrancyGuard {
         uint256[] memory sharesToMint = new uint256[](arrayLength);
 
         // First pass: Calculate all shares using current exchange rate
-        for (uint256 i; i < arrayLength; i++) {
+        for (uint256 i; i < arrayLength; ++i) {
             address _receiver = receivers[i];
-            if (_receiver == address(0)) {
-                revert InvalidAddress();
-            }
+            if (_receiver == address(0)) revert MultipliMigrator__InvalidAddress();
 
             uint256 _assets = assets[i];
-            if (_assets == 0) {
-                revert ZeroAmount();
-            }
+            if (_assets == 0) revert MultipliMigrator__ZeroAmount();
 
             uint256 _id = ids[i];
-            if (migrationID[_id]) {
-                revert IDAlreadyExists();
-            }
+            if (migrationID[_id]) revert MultipliMigrator__IDAlreadyExists();
 
             // mint shares to receiver
             uint256 _shares = vault.previewDeposit(_assets);
             uint256 _minShares = minShares[i];
             if (_shares < _minShares) {
-                revert InsufficientSharesReceived(_shares, _minShares);
+                revert MultipliMigrator__InsufficientSharesReceived(_shares, _minShares);
             }
             sharesToMint[i] = _shares;
             migrationID[_id] = true;
@@ -160,7 +180,7 @@ contract MultipliMigrator is Ownable, ReentrancyGuard {
         }
 
         // Second pass: Execute all mints
-        for (uint256 i; i < arrayLength; i++) {
+        for (uint256 i; i < arrayLength; ++i) {
             vault.adminMint(receivers[i], sharesToMint[i]);
             emit UserMigrated(ids[i], receivers[i], assets[i], sharesToMint[i]);
         }

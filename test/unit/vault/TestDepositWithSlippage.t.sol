@@ -70,7 +70,7 @@ contract TestDepositWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.InsufficientSharesReceived.selector, expectedShares, minShares)
+            abi.encodeWithSelector(Errors.Errors__InsufficientSharesReceived.selector, expectedShares, minShares)
         );
         depositVault.deposit(assets, users.alice, minShares);
         vm.stopPrank();
@@ -106,7 +106,7 @@ contract TestDepositWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.DepositAmountLessThanThreshold.selector, assets, minDepositAmount)
+            abi.encodeWithSelector(Errors.Errors__DepositAmountLessThanThreshold.selector, assets, minDepositAmount)
         );
         depositVault.deposit(assets, users.alice, minShares);
         vm.stopPrank();
@@ -131,7 +131,7 @@ contract TestDepositWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.InsufficientSharesReceived.selector, assets, minShares)
+            abi.encodeWithSelector(Errors.Errors__InsufficientSharesReceived.selector, assets, minShares)
         );
         depositVault.deposit(assets, users.alice, minShares);
         vm.stopPrank();
@@ -173,7 +173,7 @@ contract TestDepositWithSlippage is BaseTest {
 
         vm.startPrank(users.bob);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.InsufficientSharesReceived.selector, getQuantizedValue(50), minShares)
+            abi.encodeWithSelector(Errors.Errors__InsufficientSharesReceived.selector, getQuantizedValue(50), minShares)
         );
         uint256 actualShares = depositVault.deposit(assets, users.bob, minShares);
         vm.stopPrank();
@@ -338,7 +338,7 @@ contract TestDepositWithSlippage is BaseTest {
 
         vm.startPrank(users.alice);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.InsufficientSharesReceived.selector, expectedShares, minShares)
+            abi.encodeWithSelector(Errors.Errors__InsufficientSharesReceived.selector, expectedShares, minShares)
         );
         depositVault.deposit(assets, users.alice, minShares);
         vm.stopPrank();

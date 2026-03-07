@@ -60,7 +60,7 @@ contract TestPreviewInstantRedeem is BaseTest {
     }
 
     function test_previewInstantRedeem_RevertsOnZeroShares() public {
-        vm.expectRevert(IVariableVaultFee.ZeroAmount.selector);        
+        vm.expectRevert(IVariableVaultFee.IVariableVaultFee__ZeroAmount.selector);        
         uint256 assetsWithoutFee = depositVault.previewInstantRedeem(0);
 
     }

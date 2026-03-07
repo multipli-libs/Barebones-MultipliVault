@@ -8,7 +8,7 @@ import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract TestConstructor is VaultFundManagerBase {
     function test_Constructor_RevertsWithZeroAddress() public {
-        vm.expectRevert(VaultFundManager.ZeroAddress.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAddress.selector);
         new VaultFundManager(payable(address(0)));
     }
 

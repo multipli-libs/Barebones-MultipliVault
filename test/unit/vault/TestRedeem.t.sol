@@ -15,7 +15,7 @@ contract TestRedeem is BaseTest {
     }
 
     function testredeemReverts() public {
-        vm.expectRevert(abi.encodeWithSelector(Errors.UseRequestRedeem.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Errors__UseRequestRedeem.selector));
         depositVault.redeem(aliceShares, users.alice, users.alice);
     }
 }

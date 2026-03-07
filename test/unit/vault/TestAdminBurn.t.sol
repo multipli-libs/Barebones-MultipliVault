@@ -24,7 +24,7 @@ contract TestAdminBurn is BaseTest {
 
     function test__adminBurn__Reverts__CalledByUnAuthorizedUser() public {
         vm.startPrank(users.alice);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         depositVault.adminBurn(users.alice, getQuantizedValue(10));
         vm.stopPrank();
     }

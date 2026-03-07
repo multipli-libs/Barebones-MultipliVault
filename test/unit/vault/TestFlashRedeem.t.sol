@@ -326,7 +326,7 @@ contract TestFlashRedeem is BaseTest {
     function test_flashRedeem_Revert_ZeroAddressOperator() public {
         uint256 shares = depositVault.balanceOf(address(operator));
         vm.startPrank(address(operatorOwner));
-        vm.expectRevert("UnauthorizedCaller()");
+        vm.expectRevert("VaultFundManager__UnauthorizedCaller()");
         fundManager.flashRedeem(address(0), shares, "");
         vm.stopPrank();
     }
@@ -334,7 +334,7 @@ contract TestFlashRedeem is BaseTest {
     // Zero shares input
     function test_flashRedeem_Revert_ZeroShares() public {
         vm.startPrank(address(operatorOwner));
-        vm.expectRevert(VaultFundManager.ZeroAmount.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAmount.selector);
         fundManager.flashRedeem(address(operator), 0, "");
         vm.stopPrank();
     }
@@ -345,7 +345,7 @@ contract TestFlashRedeem is BaseTest {
         deal(address(token), address(fundManager), 0);
         uint256 shares = getQuantizedValue(1);
         vm.startPrank(address(operatorOwner));
-        vm.expectRevert(VaultFundManager.InsufficientBalance.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__InsufficientBalance.selector);
         fundManager.flashRedeem(address(operator), shares, "");
         vm.stopPrank();
     }
@@ -359,7 +359,7 @@ contract TestFlashRedeem is BaseTest {
         vm.stopPrank();
         uint256 shares = depositVault.balanceOf(address(operator));
         vm.startPrank(address(operatorOwner));
-        vm.expectRevert(IVariableVaultFee.ZeroAmount.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__ZeroAmount.selector);
         fundManager.flashRedeem(address(operator), shares, "");
         vm.stopPrank();
     }
@@ -392,7 +392,7 @@ contract TestFlashRedeem is BaseTest {
         assertGt(assetsWithFee, newUnderlyingBalance, "assetsWithFee should be greater than `newUnderlyingBalance` for test");
 
         vm.startPrank(address(operatorOwner));
-        vm.expectRevert("INVARIANT: InvalidCurrentAggregateBalance");
+        vm.expectRevert(abi.encodeWithSignature("VaultFundManager__InvalidCurrentAggregateBalance()"));
         fundManager.flashRedeem(address(operator), shares, "");
         vm.stopPrank();
     }
@@ -406,7 +406,7 @@ contract TestFlashRedeem is BaseTest {
         uint256 shares = depositVault.balanceOf(address(operator));
         vm.startPrank(operatorOwner);
         // should revert due to isWhitelisted modifier
-        vm.expectRevert("UnauthorizedCaller()");
+        vm.expectRevert("VaultFundManager__UnauthorizedCaller()");
         freshManager.flashRedeem(address(operator), shares, "");
         vm.stopPrank();
     }
@@ -435,7 +435,7 @@ contract TestFlashRedeem is BaseTest {
         amountWithFee = depositVault.convertToAssets(shares);
 
         vm.startPrank(address(fundManager));
-        vm.expectRevert("InvalidOperatorAddress()");
+        vm.expectRevert("Errors__InvalidOperatorAddress()");
         depositVault.flashRedeem(address(operator), address(0), address(operator), shares, amountWithFee, "");
         vm.stopPrank();
     }
@@ -447,7 +447,7 @@ contract TestFlashRedeem is BaseTest {
         
         amountWithFee = depositVault.convertToAssets(shares);
         vm.startPrank(address(fundManager));
-        vm.expectRevert(Errors.InvalidReceiverAddress.selector);
+        vm.expectRevert(Errors.Errors__InvalidReceiverAddress.selector);
         depositVault.flashRedeem(address(operator), address(operator), address(0), shares,amountWithFee, "");
         vm.stopPrank();
     }
@@ -503,7 +503,7 @@ contract TestFlashRedeem is BaseTest {
         uint256 shares = depositVault.balanceOf(address(operator));
         vm.startPrank(address(operatorOwner));
         // revert due to missing role in onUnderlyingBalanceUpdate
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()"));
         fundManager.flashRedeem(address(operator), shares, "");
         vm.stopPrank();
     }
@@ -528,7 +528,7 @@ contract TestFlashRedeem is BaseTest {
         uint256 shares = depositVault.balanceOf(address(badOperator)); 
 
         vm.startPrank(address(operatorOwner));
-        vm.expectRevert(abi.encodeWithSignature("SharesNotReturned()"));
+        vm.expectRevert(abi.encodeWithSignature("Errors__SharesNotReturned()"));
         fundManager.flashRedeem(address(badOperator), shares, "");
         vm.stopPrank();
     }
@@ -695,7 +695,7 @@ contract TestFlashRedeem is BaseTest {
 
         uint256 shares = depositVault.balanceOf(address(operator));
         vm.startPrank(address(operatorOwner));
-        vm.expectRevert("UNAUTHORIZED"); // Access control fail
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()")); // Access control fail
         fundManager.flashRedeem(address(operator), shares, "");
         vm.stopPrank();
     }
@@ -706,7 +706,7 @@ contract TestFlashRedeem is BaseTest {
         
         amountWithFee = depositVault.convertToAssets(shares);
         vm.startPrank(users.alice);
-        vm.expectRevert("UNAUTHORIZED"); // No requiresAuth
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()")); // No requiresAuth
         depositVault.flashRedeem(users.alice, address(operator), address(operator), shares,amountWithFee, "");
         vm.stopPrank();
     }
@@ -717,7 +717,7 @@ contract TestFlashRedeem is BaseTest {
         
         amountWithFee = depositVault.convertToAssets(shares);
         vm.startPrank(address(operator));
-        vm.expectRevert("UNAUTHORIZED"); // unauthorized sender (operator being sender)
+        vm.expectRevert(abi.encodeWithSignature("AuthUpgradeable__Unauthorized()")); // unauthorized sender (operator being sender)
         depositVault.flashRedeem(
             address(operator), address(operator), address(operator), shares, amountWithFee, "" 
         );
@@ -731,7 +731,7 @@ contract TestFlashRedeem is BaseTest {
 
         uint256 shares = depositVault.balanceOf(address(operator));
         vm.startPrank(address(operatorOwner));
-        vm.expectRevert("ZeroAmount()");
+        vm.expectRevert("VaultFundManager__ZeroAmount()");
         fundManager.flashRedeem(address(operator), shares, "");
         vm.stopPrank();
     }
@@ -818,7 +818,7 @@ contract TestFlashRedeem is BaseTest {
         uint256 amountWithFee = 0; 
         amountWithFee = depositVault.convertToAssets(shares);
         vm.startPrank(address(fundManager));
-        vm.expectRevert(Errors.SharesAmountZero.selector);
+        vm.expectRevert(Errors.Errors__SharesAmountZero.selector);
         depositVault.flashRedeem(address(operator), address(operator), address(operator), 0,amountWithFee, "");
         vm.stopPrank();
     }
@@ -829,7 +829,7 @@ contract TestFlashRedeem is BaseTest {
         
         amountWithFee = depositVault.convertToAssets(shares);
         vm.startPrank(address(fundManager));
-        vm.expectRevert(Errors.InvalidOperatorAddress.selector);
+        vm.expectRevert(Errors.Errors__InvalidOperatorAddress.selector);
         depositVault.flashRedeem(address(operator), address(0), address(operator), shares,amountWithFee, "");
         vm.stopPrank();
     }
@@ -843,7 +843,7 @@ contract TestFlashRedeem is BaseTest {
         
         amountWithFee = depositVault.convertToAssets(shares);
         vm.startPrank(address(fundManager));
-        vm.expectRevert(Errors.InvalidAssetsAmount.selector);
+        vm.expectRevert(Errors.Errors__InvalidAssetsAmount.selector);
         depositVault.flashRedeem(
             address(operator), address(operator), address(operator), shares,amountWithFee, ""
         );
@@ -939,7 +939,7 @@ contract TestFlashRedeem is BaseTest {
 
         // Non-whitelisted user should fail
         vm.startPrank(otherUser);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.flashRedeem(address(operator), getQuantizedValue(50), "");
         vm.stopPrank();
     }
@@ -967,7 +967,7 @@ contract TestFlashRedeem is BaseTest {
 
         // Failure path for unrelated user
         vm.startPrank(otherUser);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.flashRedeem(address(operator), getQuantizedValue(50), "");
         vm.stopPrank();
     }
@@ -987,7 +987,7 @@ contract TestFlashRedeem is BaseTest {
         );
         vm.stopPrank();
         vm.prank(operatorOwner);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.flashRedeem(address(operator), getQuantizedValue(50), "");
     }
 
@@ -1032,7 +1032,7 @@ contract TestFlashRedeem is BaseTest {
 
         // Fail: operatorOwner cannot redeem after revocation
         vm.startPrank(operatorOwner);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.flashRedeem(address(operator), getQuantizedValue(50), "");
         vm.stopPrank();
     }
@@ -1057,7 +1057,7 @@ contract TestFlashRedeem is BaseTest {
 
         // Operator2 is not whitelisted
         vm.prank(operatorOwner2);
-        vm.expectRevert(VaultFundManager.UnauthorizedCaller.selector);
+        vm.expectRevert(VaultFundManager.VaultFundManager__UnauthorizedCaller.selector);
         fundManager.flashRedeem(address(operator2), getQuantizedValue(50), "");
     }
 
