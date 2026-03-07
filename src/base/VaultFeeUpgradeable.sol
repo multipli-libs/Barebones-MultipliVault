@@ -28,7 +28,8 @@ abstract contract VaultFeeUpgradeable is Initializable {
     //////////////////////////////////////////////////////////////*/
 
     // Storage slot for the VaultFeeStorageLocation struct.
-    // keccak256(abi.encode(uint256(keccak256("multipli.storage.vaultfeeV1")) - 1)) & ~bytes32(uint256(0xff))
+    // keccak256(abi.encode(uint256(keccak256("multipli.storage.vaultfeeV1")) - 1)) &
+    // ~bytes32(uint256(0xff))
     bytes32 private constant VaultFeeStorageLocation =
         0x4e0114f5bb788bf295d0ab17f602045fbe9841605d1e05a2674fbfa584e94700;
 
@@ -55,7 +56,8 @@ abstract contract VaultFeeUpgradeable is Initializable {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Updates the fee contract. Developers are expected to add access control for this method.
+     * @notice Updates the fee contract. Developers are expected to add access control for this
+     * method.
      * @param _feeContract The new fee contract.
      */
     function setFeeContract(IVariableVaultFee _feeContract) public virtual {

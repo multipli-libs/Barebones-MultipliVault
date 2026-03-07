@@ -37,7 +37,8 @@ abstract contract FundMovementHelperUpgradeable is Initializable {
     //////////////////////////////////////////////////////////////*/
 
     // Storage slot for the FundMovementHelperStorage struct.
-    // keccak256(abi.encode(uint256(keccak256("multipli.storage.FundMovementHelperStorage")) - 1)) & ~bytes32(uint256(0xff))
+    // keccak256(abi.encode(uint256(keccak256("multipli.storage.FundMovementHelperStorage")) - 1)) &
+    // ~bytes32(uint256(0xff))
     bytes32 private constant FUND_MOVEMENT_STORAGE_LOCATION =
         0x2bbdf87c296f0fc445d947563c77d7b805fc738a2e220084769a264d45deaf00;
 
@@ -118,7 +119,8 @@ abstract contract FundMovementHelperUpgradeable is Initializable {
 
     /**
      * @notice Updates the whitelist status of a fund transfer recipient
-     * @dev This method is expected to be called from the inheriting contract with proper access controls
+     * @dev This method is expected to be called from the inheriting contract with proper access
+     * controls
      * @param user The address to update whitelist status for
      * @param isWhitelisted True to whitelist the user, false to remove from whitelist
      */

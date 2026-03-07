@@ -9,8 +9,10 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 
 /**
  * @title VaultFundManager
- * @notice A helper contract for managing vault fund operations including fund transfers and redemption fulfillment
- * @dev This contract acts as an intermediary for vault operations that require careful balance management.
+ * @notice A helper contract for managing vault fund operations including fund transfers and
+ * redemption fulfillment
+ * @dev This contract acts as an intermediary for vault operations that require careful balance
+ * management.
  *      All functions are designed to be called through the vault's `manage` function,
  *      ensuring proper authorization (except `flashRedeem()`)
  *
@@ -20,7 +22,8 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
  *      - Facilitate redemption fulfillment with proper balance adjustments
  *      - Handle flash redemptions for unwinding leveraged positions
  *
- *      Security model: Access control is enforced by requiring calls to originate from the vault contract,
+ *      Security model: Access control is enforced by requiring calls to originate from the vault
+ * contract,
  *      which means they must go through the vault's `manage` function with proper authorization.
  *        Exception: `flashRedeem()`. For flashRedeem, the user and operator has to be added
  *        to the allowlist (`whitelistedUserOperator`)
@@ -38,8 +41,10 @@ contract VaultFundManager is ReentrancyGuard {
     /**
      * @notice Structure to capture vault state for validation
      * @dev Used to ensure state consistency before and after flash redemption operations
-     * @param lastPricePerShare The last recorded price per share from vault (`vault.lastPricePerShare()`)
-     * @param priceOfOneShare Current price of one share calculated from convertToAssets (`vault.convertToAssets(1e6)`)
+     * @param lastPricePerShare The last recorded price per share from vault
+     * (`vault.lastPricePerShare()`)
+     * @param priceOfOneShare Current price of one share calculated from convertToAssets
+     * (`vault.convertToAssets(1e6)`)
      * @param totalAssets Total assets managed by the vault
      * @param totalSupply Total supply of vault shares
      * @param tokenBalance Current token balance held by the vault
@@ -162,7 +167,8 @@ contract VaultFundManager is ReentrancyGuard {
     /// @notice Thrown when total assets don't match before and after an operation
     error VaultFundManager__TotalSupplyMismatch();
 
-    /// @notice Thrown when expected aggregatedBalances does not match with current aggregatedBalances
+    /// @notice Thrown when expected aggregatedBalances does not match with current
+    /// aggregatedBalances
     error VaultFundManager__AggregatedBalanceMismatch();
 
     /// @notice Thrown when a zero address is provided where it's not allowed
@@ -315,10 +321,14 @@ contract VaultFundManager is ReentrancyGuard {
         vault.onUnderlyingBalanceUpdate(newAggregatedBalance);
 
         // Verify total assets remain unchanged
-        if (oldTotalAssetsValue != vault.totalAssets()) revert VaultFundManager__TotalAssetsMismatch();
+        if (oldTotalAssetsValue != vault.totalAssets()) {
+            revert VaultFundManager__TotalAssetsMismatch();
+        }
 
         // sanity check: total number of shares must remain unchanged
-        if (oldTotalSupplyValue != vault.totalSupply()) revert VaultFundManager__TotalSupplyMismatch();
+        if (oldTotalSupplyValue != vault.totalSupply()) {
+            revert VaultFundManager__TotalSupplyMismatch();
+        }
 
         emit FundsRemovedFromVault(recipient, amount, newAggregatedBalance);
     }
@@ -330,7 +340,8 @@ contract VaultFundManager is ReentrancyGuard {
      *      principal and any yield generated.
      *
      * @param oldAggregatedBalance The expected current balance (for safety check)
-     * @param newAggregatedBalance The new total balance across all external strategies (principal + yield)
+     * @param newAggregatedBalance The new total balance across all external strategies (principal +
+     * yield)
      *
      * @custom:throws AggregatedBalanceMismatch if current balance doesn't match expected
      *
@@ -347,7 +358,9 @@ contract VaultFundManager is ReentrancyGuard {
         onlyVault
     {
         uint256 oldBalance = vault.aggregatedUnderlyingBalances();
-        if (oldBalance != oldAggregatedBalance) revert VaultFundManager__AggregatedBalanceMismatch();
+        if (oldBalance != oldAggregatedBalance) {
+            revert VaultFundManager__AggregatedBalanceMismatch();
+        }
 
         vault.onUnderlyingBalanceUpdate(newAggregatedBalance);
 
@@ -356,7 +369,8 @@ contract VaultFundManager is ReentrancyGuard {
 
     /**
      * @notice Adds funds to the vault and fulfills a pending redemption request
-     * @dev This function facilitates redemption by first transferring the required assets to the vault,
+     * @dev This function facilitates redemption by first transferring the required assets to the
+     * vault,
      *      updating the aggregated balance to account for the asset movement, and then fulfilling
      *      the redemption request. This three-step process ensures price stability and prevents
      *      sandwich attacks.
@@ -467,9 +481,11 @@ contract VaultFundManager is ReentrancyGuard {
         // record the snapshot of the necessary state variables
         initialStateVars = _captureCurrentStateInformation();
 
-        // When this happens, this means the vault is new (`onUnderlyingBalanceUpdate` has not been called) or
-        // when the value of `onUnderlyingBalanceUpdate` was set as 0 which means the vault has lost all it's value
-        // Adding it here, so we fail fast. As part of step2: we deduct the totalAssets() value by calling `onUnderlyingBalanceUpdate`
+        // When this happens, this means the vault is new (`onUnderlyingBalanceUpdate` has not been
+        // called) or when the value of `onUnderlyingBalanceUpdate` was set as 0 which means the
+        // vault has lost all it's value
+        // Adding it here, so we fail fast. As part of step2: we deduct the totalAssets() value by
+        // calling `onUnderlyingBalanceUpdate`
         if (
             initialStateVars.aggregatedUnderlyingBalances == 0
                 || initialStateVars.aggregatedUnderlyingBalances < assetsWithFee
@@ -536,7 +552,8 @@ contract VaultFundManager is ReentrancyGuard {
     }
 
     /**
-     * @notice Removes native assets (ETH/AVAX) from the contract and transfers them to a specified address
+     * @notice Removes native assets (ETH/AVAX) from the contract and transfers them to a specified
+     * address
      * @dev This function can only be called by the vault contract through the manage function.
      *      It's used to transfer native blockchain assets
      *      for operational purposes such as paying gas fees or moving native assets to exchanges.
@@ -638,7 +655,8 @@ contract VaultFundManager is ReentrancyGuard {
 
         // store the values before initiating the operation
         stateVars.lastPricePerShare = vault.lastPricePerShare();
-        stateVars.priceOfOneShare = vault.convertToAssets(10 ** decimals); // Ideally, lastPricePerShareBefore = priceOfOneShareBefore
+        stateVars.priceOfOneShare = vault.convertToAssets(10 ** decimals); // Ideally,
+        // lastPricePerShareBefore = priceOfOneShareBefore
         stateVars.totalAssets = vault.totalAssets();
         stateVars.totalSupply = vault.totalSupply();
         stateVars.tokenBalance = IERC20(asset).balanceOf(address(vault));
@@ -694,7 +712,8 @@ contract VaultFundManager is ReentrancyGuard {
             revert VaultFundManager__TotalSupplyLessThanExpected();
         }
 
-        // `tokenBalanceBefore` will always be equal to `tokenBalanceAfter`. But the operator can decide to send in additional `assets` to the vault
+        // `tokenBalanceBefore` will always be equal to `tokenBalanceAfter`. But the operator can
+        // decide to send in additional `assets` to the vault
         if (initialState.tokenBalance > finalState.tokenBalance) {
             revert VaultFundManager__AssetBalanceMismatch();
         }

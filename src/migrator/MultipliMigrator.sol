@@ -144,12 +144,8 @@ contract MultipliMigrator is Ownable, ReentrancyGuard {
             revert MultipliMigrator__InvalidBatchSize();
         }
 
-        if (
-            !(
-                arrayLength == receivers.length && arrayLength == assets.length
-                    && arrayLength == minShares.length
-            )
-        ) {
+        if (!(arrayLength == receivers.length && arrayLength == assets.length
+                    && arrayLength == minShares.length)) {
             revert MultipliMigrator__ArrayLengthsMismatch();
         }
 

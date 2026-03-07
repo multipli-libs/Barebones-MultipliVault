@@ -4,7 +4,8 @@ pragma solidity ^0.8.30;
 /**
  * @title Errors
  * @notice Defines custom error types for various contract operations.
- * @dev This library provides reusable error messages for share operations, authorization checks, and vault interactions.
+ * @dev This library provides reusable error messages for share operations, authorization checks,
+ * and vault interactions.
  */
 library Errors {
     /*//////////////////////////////////////////////////////////////
@@ -89,7 +90,8 @@ library Errors {
     error Errors__AssetBalanceMismatch();
 
     /**
-     * @notice Thrown when a withdraw is attempted with an amount different than the claimable assets.
+     * @notice Thrown when a withdraw is attempted with an amount different than the claimable
+     * assets.
      */
     error Errors__InvalidAssetsAmount();
 

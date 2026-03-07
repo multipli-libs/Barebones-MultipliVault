@@ -30,12 +30,15 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts/proxy/utils/UUPSUpgrade
  * @title MultipliVault
  * @author Multipli Team
  * @notice A vault contract that enables an operator to manage vault assets asynchronously
- * @dev Implements the ERC4626 standard with Auth contract for access control and ERC-7201 storage pattern
+ * @dev Implements the ERC4626 standard with Auth contract for access control and ERC-7201 storage
+ * pattern
  *
  * The contract provides a redeem request mechanism that allows users to initiate a redeem request,
- * and the operator to fulfill it at a later time. This mechanism is particularly useful for scenarios
+ * and the operator to fulfill it at a later time. This mechanism is particularly useful for
+ * scenarios
  * where the operator needs to move assets across chains or to different strategies before settling
- * the user's redemption request. Upon fulfillment, assets are transferred to the vault, and the request
+ * the user's redemption request. Upon fulfillment, assets are transferred to the vault, and the
+ * request
  * is marked as complete.
  *
  * @custom:security-contact security@multipli.com
@@ -60,7 +63,8 @@ contract MultipliVault is
 
     /**
      * @notice Enum defining different types of redemption requests
-     * @dev Used to handle different redemption flows with varying fee structures and processing methods
+     * @dev Used to handle different redemption flows with varying fee structures and processing
+     * methods
      */
     enum RedeemType {
         NORMAL, // Standard redemption with regular fees
@@ -102,11 +106,13 @@ contract MultipliVault is
      * @dev Structure to hold MultipliVault storage data following ERC-7201 standard
      */
     struct MultipliVaultStorage {
-        /// @dev The aggregated underlying balances across all strategies/chains, reported by an oracle
+        /// @dev The aggregated underlying balances across all strategies/chains, reported by an
+        /// oracle
         uint256 aggregatedUnderlyingBalances;
         /// @dev The last block number when the aggregated underlying balances were updated
         uint256 lastBlockUpdated;
-        /// @dev The last price per share calculated after the aggregated underlying balances are reported
+        /// @dev The last price per share calculated after the aggregated underlying balances are
+        /// reported
         uint256 lastPricePerShare;
         /// @dev The total amount of assets that are pending redemption
         uint256 totalPendingAssets;
@@ -122,17 +128,20 @@ contract MultipliVault is
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
 
-    /// @dev Assume requests are non-fungible and all have ID = 0, so we can differentiate between a request ID and the assets amount
+    /// @dev Assume requests are non-fungible and all have ID = 0, so we can differentiate between a
+    /// request ID and the assets amount
     uint256 internal constant REQUEST_ID = 0;
 
     /// @dev The denominator used for precision calculations (1e18 = 100%)
     uint256 internal constant DENOMINATOR = 1e18;
 
-    /// @dev The maximum percentage that can be set as a threshold for the percentage change (1e17 = 10%)
+    /// @dev The maximum percentage that can be set as a threshold for the percentage change (1e17 =
+    /// 10%)
     uint256 internal constant MAX_PERCENTAGE_THRESHOLD = 1e17;
 
     // Storage slot for the MultipliVaultStorage struct.
-    // keccak256(abi.encode(uint256(keccak256("multipli.storage.MultipliVaultStorage")) - 1)) & ~bytes32(uint256(0xff))
+    // keccak256(abi.encode(uint256(keccak256("multipli.storage.MultipliVaultStorage")) - 1)) &
+    // ~bytes32(uint256(0xff))
     bytes32 private constant MULTIPLI_VAULT_STORAGE_LOCATION =
         0x5c514b81e93a4e64ed3b3d78d8355319d5f0f527b3964e825d59f3a9d74af900;
 
@@ -456,11 +465,16 @@ contract MultipliVault is
     /**
      * @notice Updates the aggregated underlying asset balances from all strategies.
      * @param newAggregatedBalance The total underlying asset balance across all strategies.
-     * @dev Only callable once per block (enforced by `lastBlockUpdated` check) to prevent oracle manipulation and flash loan attacks
-     * @dev Automatically pauses the vault if the price per share change exceeds `maxPercentageChange` threshold
-     * @dev This function can be front-run, so it's recommended to call it through a periphery contract that verifies the current `aggregatedBalance` matches expectations before calling this method
+     * @dev Only callable once per block (enforced by `lastBlockUpdated` check) to prevent oracle
+     * manipulation and flash loan attacks
+     * @dev Automatically pauses the vault if the price per share change exceeds
+     * `maxPercentageChange` threshold
+     * @dev This function can be front-run, so it's recommended to call it through a periphery
+     * contract that verifies the current `aggregatedBalance` matches expectations before calling
+     * this method
      * @dev Emits `UnderlyingBalanceUpdated` event with old and new balance values
-     * @dev Updates storage: `aggregatedUnderlyingBalances`, `lastPricePerShare`, and `lastBlockUpdated`
+     * @dev Updates storage: `aggregatedUnderlyingBalances`, `lastPricePerShare`, and
+     * `lastBlockUpdated`
      */
     function onUnderlyingBalanceUpdate(uint256 newAggregatedBalance) external requiresAuth {
         MultipliVaultStorage storage $ = _getMultipliVaultStorage();
@@ -562,7 +576,8 @@ contract MultipliVault is
     /**
      * @notice Deposit assets with slippage protection (ERC-5143 compatible)
      * @dev This function extends the standard ERC-4626 deposit function with slippage protection
-     *      as specified in ERC-5143: Slippage Protection for Tokenized Vault and introduces additional checks.
+     *      as specified in ERC-5143: Slippage Protection for Tokenized Vault and introduces
+     * additional checks.
      *      Reverts if the number of shares received is less than the minimum expected.
      * @param assets The amount of assets to deposit
      * @param receiver The address that will receive the vault shares
@@ -645,7 +660,8 @@ contract MultipliVault is
      * @notice Mint shares with slippage protection (ERC-5143 compatible)
      * @dev This function extends the standard ERC-4626 mint function with slippage protection
      *      as specified in ERC-5143: Slippage Protection for Tokenized Vault.
-     *      Reverts if the number of assets required exceeds the maximum the caller is willing to pay.
+     *      Reverts if the number of assets required exceeds the maximum the caller is willing to
+     * pay.
      * @param shares The exact number of shares to mint
      * @param receiver The address that will receive the vault shares
      * @param maxAssets The maximum number of assets the caller is willing to pay
