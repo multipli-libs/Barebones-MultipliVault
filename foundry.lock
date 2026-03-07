@@ -11,6 +11,12 @@
   "lib/openzeppelin-foundry-upgrades": {
     "rev": "cbce1e00305e943aa1661d43f41e5ac72c662b07"
   },
+  "lib/solady": {
+    "tag": {
+      "name": "v0.1.26",
+      "rev": "acd959aa4bd04720d640bf4e6a5c71037510cc4b"
+    }
+  },
   "lib/solmate": {
     "rev": "89365b880c4f3c786bdd453d4b8e8fe410344a69"
   }
