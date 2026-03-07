@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.34;
 
 import {VariableVaultFee} from "src/fees/VariableVaultFee.sol";
 import {FeeBase} from "./Base.t.sol";

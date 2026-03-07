@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.34;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 
 interface IMultipliVault {
     function adminMint(address receiver, uint256 shares) external;
@@ -16,7 +16,7 @@ interface IMultipliVault {
  * @notice Enables secure and atomic migration of user balances from v1 to v2 vault
  * @custom:security-contact security@multipli.com
  */
-contract MultipliMigrator is Ownable, ReentrancyGuard {
+contract MultipliMigrator is Ownable, ReentrancyGuardTransient {
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/

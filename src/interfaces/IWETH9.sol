@@ -2,7 +2,7 @@
 // Reference from Uniswap v3:
 // (https://github.com/Uniswap/v3-periphery/blob/main/contracts/interfaces/external/IWETH9.sol)
 
-pragma solidity ^0.8.30;
+pragma solidity ^0.8.34;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 

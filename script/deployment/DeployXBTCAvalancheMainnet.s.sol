@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.34;
 
 import {BaseWithSharedConfig} from "./common/BaseWithSharedConfig.s.sol";
 import {console} from "forge-std/Script.sol";

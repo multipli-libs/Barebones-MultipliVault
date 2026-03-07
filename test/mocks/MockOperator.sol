@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.30;
+pragma solidity 0.8.34;
 
 import {IMultipliVaultCallee} from "src/interfaces/IMultipliVaultCallee.sol";
 import {MultipliVault} from "src/vault/MultipliVault.sol";

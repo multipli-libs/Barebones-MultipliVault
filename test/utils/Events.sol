@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.34;
 
 /// @notice Abstract contract containing all the events emitted by the protocol.
 // solhint-disable-next-line no-empty-blocks

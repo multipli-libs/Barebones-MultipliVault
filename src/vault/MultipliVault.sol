@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.34;
 
 import { Errors } from "../libraries/Errors.sol";
 import { IMultipliVault } from "../interfaces/IMultipliVault.sol";
@@ -21,8 +21,8 @@ import {
     PausableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {
-    ReentrancyGuardUpgradeable
-} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+    ReentrancyGuardTransientUpgradeable
+} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 
 import { UUPSUpgradeable } from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
@@ -51,7 +51,7 @@ contract MultipliVault is
     PausableUpgradeable,
     VaultFeeUpgradeable,
     FundMovementHelperUpgradeable,
-    ReentrancyGuardUpgradeable
+    ReentrancyGuardTransientUpgradeable
 {
     using Math for uint256;
     using Address for address;
@@ -871,7 +871,7 @@ contract MultipliVault is
         __Pausable_init();
         __VaultFeeUpgreadable_init(IVariableVaultFee(address(0)));
         __FundMovementHelper_init();
-        __ReentrancyGuard_init();
+        __ReentrancyGuardTransient_init();
         __MultipliVault_init_unchained();
     }
 

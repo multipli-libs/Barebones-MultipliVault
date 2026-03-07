@@ -1,6 +1,6 @@
 // solhint-disable
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.34;
 
 import {Errors} from "src/libraries/Errors.sol";
 
