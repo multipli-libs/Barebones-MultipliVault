@@ -5,7 +5,9 @@ import { MultipliVault } from "../vault/MultipliVault.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
+import {
+    ReentrancyGuardTransient
+} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 
 /**
  * @title VaultFundManager
@@ -75,6 +77,15 @@ contract VaultFundManager is ReentrancyGuardTransient {
 
     uint256 internal constant DENOMINATOR = 1e18;
 
+    /// @notice Maximum total withdrawals allowed per epoch (24h) — anti-drainer cap
+    uint256 public maxWithdrawalPerEpoch;
+
+    /// @notice Running total of withdrawals in the current epoch
+    uint256 public currentEpochWithdrawals;
+
+    /// @notice Timestamp when the current epoch started
+    uint256 public lastEpochReset;
+
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -142,6 +153,13 @@ contract VaultFundManager is ReentrancyGuardTransient {
     event RemoveFunds(address indexed to, uint256 amount);
 
     /**
+     * @notice Emitted when the withdrawal cap is updated
+     * @param oldCap The previous withdrawal cap
+     * @param newCap The new withdrawal cap
+     */
+    event WithdrawalCapUpdated(uint256 oldCap, uint256 newCap);
+
+    /**
      * @notice Emitted when native assets (ETH/AVAX) are removed from the contract
      * @param to The address that received the native funds
      * @param amount The amount of native assets transferred
@@ -188,6 +206,9 @@ contract VaultFundManager is ReentrancyGuardTransient {
 
     /// @notice Thrown when priceOfOneShare slippage exceeds threshold after flash redemption
     error VaultFundManager__PriceOfOneShareSlippageExceeded();
+
+    /// @notice Thrown when withdrawal amount exceeds the epoch cap
+    error VaultFundManager__WithdrawalCapExceeded(uint256 requested, uint256 remaining);
 
     /// @notice Thrown when total assets are less than expected after flash redemption
     error VaultFundManager__TotalAssetsLessThanExpected();
@@ -252,6 +273,16 @@ contract VaultFundManager is ReentrancyGuardTransient {
     //////////////////////////////////////////////////////////////*/
 
     /**
+     * @notice Set the maximum withdrawal amount per 24-hour epoch
+     * @param newCap The new max withdrawal per epoch (0 = no cap)
+     * @dev Can only be called through the vault's manage function
+     */
+    function setMaxWithdrawalPerEpoch(uint256 newCap) external onlyVault {
+        emit WithdrawalCapUpdated(maxWithdrawalPerEpoch, newCap);
+        maxWithdrawalPerEpoch = newCap;
+    }
+
+    /**
      * @notice Updates the whitelist status for a user-operator combination
      * @param user The user address
      * @param operator The operator contract address
@@ -307,6 +338,7 @@ contract VaultFundManager is ReentrancyGuardTransient {
     {
         if (recipient == address(0)) revert VaultFundManager__ZeroAddress();
         if (amount == 0) revert VaultFundManager__ZeroAmount();
+        _enforceWithdrawalCap(amount);
 
         uint256 balance = IERC20(asset).balanceOf(address(vault));
         if (amount > balance) revert VaultFundManager__InsufficientBalance();
@@ -543,6 +575,7 @@ contract VaultFundManager is ReentrancyGuardTransient {
     function removeFunds(address to, uint256 amount) external onlyVault {
         if (to == address(0)) revert VaultFundManager__ZeroAddress();
         if (amount == 0) revert VaultFundManager__ZeroAmount();
+        _enforceWithdrawalCap(amount);
 
         uint256 balance = IERC20(asset).balanceOf(address(this));
         if (balance < amount) revert VaultFundManager__InsufficientBalance();
@@ -618,6 +651,29 @@ contract VaultFundManager is ReentrancyGuardTransient {
     /*//////////////////////////////////////////////////////////////
                       PRIVATE READ-ONLY FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Enforce per-epoch withdrawal cap (anti-drainer protection)
+     * @param amount The withdrawal amount to check
+     * @dev Resets the epoch counter if 24 hours have passed since last reset.
+     *      If maxWithdrawalPerEpoch is 0, the cap is disabled.
+     */
+    function _enforceWithdrawalCap(uint256 amount) private {
+        uint256 cap = maxWithdrawalPerEpoch;
+        if (cap == 0) return;
+
+        if (block.timestamp > lastEpochReset + 24 hours) {
+            currentEpochWithdrawals = 0;
+            lastEpochReset = block.timestamp;
+        }
+
+        uint256 remaining = cap - currentEpochWithdrawals;
+        if (amount > remaining) {
+            revert VaultFundManager__WithdrawalCapExceeded(amount, remaining);
+        }
+
+        currentEpochWithdrawals += amount;
+    }
 
     /**
      * @notice Calculate the percentage change between two prices

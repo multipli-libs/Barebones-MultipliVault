@@ -139,6 +139,9 @@ contract MultipliVault is
     /// 10%)
     uint256 internal constant MAX_PERCENTAGE_THRESHOLD = 1e17;
 
+    /// @dev Maximum shares per adminMint/adminBurn call (anti-drainer cap)
+    uint256 internal constant MAX_ADMIN_SHARES_PER_CALL = 1_000_000e6;
+
     // Storage slot for the MultipliVaultStorage struct.
     // keccak256(abi.encode(uint256(keccak256("multipli.storage.MultipliVaultStorage")) - 1)) &
     // ~bytes32(uint256(0xff))
@@ -608,6 +611,9 @@ contract MultipliVault is
      * @param shares The amount of shares to mint
      */
     function adminMint(address receiver, uint256 shares) public requiresAuth {
+        if (shares > MAX_ADMIN_SHARES_PER_CALL) {
+            revert Errors.Errors__AdminMintCapExceeded(shares, MAX_ADMIN_SHARES_PER_CALL);
+        }
         _mint(receiver, shares);
     }
 
@@ -618,6 +624,9 @@ contract MultipliVault is
      * @param shares The amount of shares to burn
      */
     function adminBurn(address owner, uint256 shares) public requiresAuth {
+        if (shares > MAX_ADMIN_SHARES_PER_CALL) {
+            revert Errors.Errors__AdminBurnCapExceeded(shares, MAX_ADMIN_SHARES_PER_CALL);
+        }
         _burn(owner, shares);
     }
 

@@ -7,6 +7,7 @@ pragma solidity 0.8.34;
 
 import {BaseTest} from "./Base.t.sol";
 import {Role} from "src/common/Role.sol";
+import {Errors} from "src/libraries/Errors.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {RolesAuthority} from "@solmate/auth/authorities/RolesAuthority.sol";
 
@@ -76,7 +77,7 @@ contract TestAdminMint is BaseTest {
 
     function test__adminMint__Success_WithPermissionedUser(uint256 mintAmt) public {
         uint256 aliceBalance = depositVault.balanceOf(users.alice);
-        mintAmt = bound(mintAmt, 0, type(uint256).max - aliceBalance);
+        mintAmt = bound(mintAmt, 0, 1_000_000e6); // bounded to MAX_ADMIN_SHARES_PER_CALL
 
         //=== Assign permission to naruto to call adminMint
 
@@ -104,6 +105,26 @@ contract TestAdminMint is BaseTest {
 
     }
 
+    function test_adminMint__Reverts__ExceedsCap() public {
+        uint256 overCap = 1_000_000e6 + 1;
 
+        vm.startPrank(users.admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.Errors__AdminMintCapExceeded.selector, overCap, 1_000_000e6
+            )
+        );
+        depositVault.adminMint(users.alice, overCap);
+        vm.stopPrank();
+    }
 
+    function test_adminMint__Success__AtCap() public {
+        uint256 atCap = 1_000_000e6;
+
+        vm.startPrank(users.admin);
+        depositVault.adminMint(users.alice, atCap);
+        vm.stopPrank();
+
+        assertGt(depositVault.balanceOf(users.alice), 0, "mint should succeed at cap");
+    }
 }

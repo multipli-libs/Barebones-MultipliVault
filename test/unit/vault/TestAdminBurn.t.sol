@@ -8,6 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {BaseTest} from "./Base.t.sol";
 
 import {Role} from "src/common/Role.sol";
+import {Errors} from "src/libraries/Errors.sol";
 import {RolesAuthority} from "@solmate/auth/authorities/RolesAuthority.sol";
 
 
@@ -126,6 +127,22 @@ contract TestAdminBurn is BaseTest {
         // ensure alice has 0 balance
         assertEq(depositVault.balanceOf(users.alice), 0, "balance mismatch");
 
+    }
+
+    function test_adminBurn__Reverts__ExceedsCap() public {
+        uint256 overCap = 1_000_000e6 + 1;
+
+        // Mint shares first so alice has enough to attempt the burn
+        vm.startPrank(users.admin);
+        depositVault.adminMint(users.alice, 1_000_000e6);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.Errors__AdminBurnCapExceeded.selector, overCap, 1_000_000e6
+            )
+        );
+        depositVault.adminBurn(users.alice, overCap);
+        vm.stopPrank();
     }
 
 }

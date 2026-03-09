@@ -16,6 +16,15 @@ import {Errors} from "src/libraries/Errors.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 contract TestVaultFeeOperations is BaseTest {
+    modifier skipWhenCoverage() {
+        // Coverage mode disables the optimizer, inflating gas usage beyond thresholds
+        MultipliVault v = new MultipliVault();
+        if (address(v).code.length > 24576) {
+            return;
+        }
+        _;
+    }
+
     // Fee contract and related variables
     address internal feeRecipient;
 
@@ -1743,7 +1752,7 @@ contract TestVaultFeeOperations is BaseTest {
 
     // ========================================= GAS OPTIMIZATION TESTS =========================================
 
-    function test_gasUsage_DepositWithFees() public {
+    function test_gasUsage_DepositWithFees() public skipWhenCoverage {
         IVariableVaultFee.AssetFeeConfig memory assetConfig =
             _setupPercentageFeeConfig(PERCENTAGE_FEE_1_PERCENT, PERCENTAGE_FEE_1_PERCENT, PERCENTAGE_FEE_1_PERCENT, PERCENTAGE_FEE_1_PERCENT);
         _registerAssetWithFees(assetConfig);
@@ -1760,7 +1769,7 @@ contract TestVaultFeeOperations is BaseTest {
         vm.stopPrank();
     }
 
-    function test_gasUsage_RequestRedeemWithFees() public {
+    function test_gasUsage_RequestRedeemWithFees() public skipWhenCoverage {
         IVariableVaultFee.AssetFeeConfig memory assetConfig = _setupFlatFeeConfig();
         _registerAssetWithFees(assetConfig);
 

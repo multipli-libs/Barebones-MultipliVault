@@ -3,7 +3,7 @@
     "test": "sh bash_helpers/test.sh -vvv"
   },
   "dependencies": {
-    "@openzeppelin/upgrades-core": "^1.44.0",
-    "solidity-ast": "^0.4.60"
+    "@openzeppelin/upgrades-core": "^1.44.2",
+    "solidity-ast": "^1.44.2"
   }
 }

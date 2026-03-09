@@ -124,4 +124,14 @@ library Errors {
      * @notice Thrown when deposit / mint is with assets < minimum deposit amount
      */
     error Errors__UnsupportedRedeemType(uint8 redeemType);
+
+    /**
+     * @notice Thrown when adminMint exceeds the per-call cap
+     */
+    error Errors__AdminMintCapExceeded(uint256 shares, uint256 cap);
+
+    /**
+     * @notice Thrown when adminBurn exceeds the per-call cap
+     */
+    error Errors__AdminBurnCapExceeded(uint256 shares, uint256 cap);
 }
