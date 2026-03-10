@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.34;
 
-import { IVariableVaultFee } from "src/interfaces/IVariableVaultFee.sol";
+import { IVariableVaultFee } from "../interfaces/IVariableVaultFee.sol";
+
+import { Authority } from "@solmate/auth/Auth.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -25,10 +27,10 @@ abstract contract VaultFeeUpgradeable is Initializable {
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
 
-    // Storage slot for the VaultFeeStorage struct.
+    // Storage slot for the VaultFeeStorageLocation struct.
     // keccak256(abi.encode(uint256(keccak256("multipli.storage.vaultfeeV1")) - 1)) &
     // ~bytes32(uint256(0xff))
-    bytes32 private constant VAULT_FEE_STORAGE_LOCATION =
+    bytes32 private constant VaultFeeStorageLocation =
         0x4e0114f5bb788bf295d0ab17f602045fbe9841605d1e05a2674fbfa584e94700;
 
     /*//////////////////////////////////////////////////////////////
@@ -278,7 +280,7 @@ abstract contract VaultFeeUpgradeable is Initializable {
      */
     function _getVaultFeeStorage() private pure returns (VaultFeeStorage storage $) {
         assembly {
-            $.slot := VAULT_FEE_STORAGE_LOCATION
+            $.slot := VaultFeeStorageLocation
         }
     }
 }

@@ -30,7 +30,7 @@ abstract contract AuthUpgradeable is Initializable {
 
     // Storage slot for the AuthStorage struct.
     // keccak256(abi.encode(uint256(keccak256("auth.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant AUTH_STORAGE_LOCATION =
+    bytes32 private constant AuthStorageLocation =
         0xdd3fd67aef415aded9493b31ad20a02d2991d4bb2760431cc729821271eaea00;
 
     /*//////////////////////////////////////////////////////////////
@@ -165,7 +165,7 @@ abstract contract AuthUpgradeable is Initializable {
      */
     function _getAuthStorage() private pure returns (AuthStorage storage $) {
         assembly {
-            $.slot := AUTH_STORAGE_LOCATION
+            $.slot := AuthStorageLocation
         }
     }
 }

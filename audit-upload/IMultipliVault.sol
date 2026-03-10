@@ -126,21 +126,6 @@ interface IMultipliVault {
      */
     event RequestCancelled(address indexed receiver, uint256 shares, uint256 assets);
 
-    /**
-     * @notice Emitted when a fee transfer to the recipient fails
-     * @param recipient The fee recipient that reverted
-     * @param token The token that was being transferred
-     * @param amount The fee amount that failed to transfer
-     */
-    event FeeTransferFailed(address indexed recipient, address indexed token, uint256 amount);
-
-    /**
-     * @notice Emitted when the vault-level global withdrawal cap is updated.
-     * @param lastCap The previous cap value.
-     * @param newCap The new cap value.
-     */
-    event GlobalWithdrawalCapUpdated(uint256 lastCap, uint256 newCap);
-
     /*//////////////////////////////////////////////////////////////
                            EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/

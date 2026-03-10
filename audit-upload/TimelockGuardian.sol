@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.34;
 
+import { Authority } from "@solmate/auth/Auth.sol";
+import { IVariableVaultFee } from "../interfaces/IVariableVaultFee.sol";
+
 /**
  * @title TimelockGuardian
  * @author Multipli Team
@@ -49,12 +52,6 @@ contract TimelockGuardian {
     /// @notice Mapping of operation hash → pending operation metadata
     mapping(bytes32 => PendingOp) public pendingOps;
 
-    /// @notice Pending admin transfer address (requires timelock)
-    address public pendingAdmin;
-
-    /// @notice Timestamp after which the pending admin transfer can be executed
-    uint256 public adminTransferExecuteAfter;
-
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -63,7 +60,6 @@ contract TimelockGuardian {
     event OperationExecuted(bytes32 indexed opHash);
     event OperationCancelled(bytes32 indexed opHash);
     event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);
-    event AdminTransferProposed(address indexed currentAdmin, address indexed newAdmin);
     event GuardianTransferred(address indexed oldGuardian, address indexed newGuardian);
 
     /*//////////////////////////////////////////////////////////////
@@ -79,8 +75,6 @@ contract TimelockGuardian {
     error TimelockGuardian__TimelockNotReady();
     error TimelockGuardian__OperationExpired();
     error TimelockGuardian__ExecutionFailed();
-    error TimelockGuardian__AdminTransferNotReady();
-    error TimelockGuardian__NoAdminTransferPending();
 
     /*//////////////////////////////////////////////////////////////
                                MODIFIERS
@@ -192,45 +186,15 @@ contract TimelockGuardian {
     // ──────────────────────────────────────────────
 
     /**
-     * @notice Propose transferring admin role to a new address (timelocked)
+     * @notice Transfer admin role to a new address
      * @param newAdmin The new admin address
-     * @dev Starts a timelock — the transfer must be accepted after TIMELOCK_DELAY.
-     *      Guardian can cancel the pending transfer by calling cancelAdminTransfer().
+     * @dev This itself is NOT timelocked — but the admin can only propose ops,
+     *      not execute them immediately. Guardian can always cancel.
      */
     function transferAdmin(address newAdmin) external onlyAdmin {
         if (newAdmin == address(0)) revert TimelockGuardian__ZeroAddress();
-        pendingAdmin = newAdmin;
-        adminTransferExecuteAfter = block.timestamp + TIMELOCK_DELAY;
-        emit AdminTransferProposed(admin, newAdmin);
-    }
-
-    /**
-     * @notice Accept the pending admin transfer after timelock expires
-     * @dev Can be called by the current admin or the pending admin.
-     */
-    function acceptAdminTransfer() external {
-        if (pendingAdmin == address(0)) revert TimelockGuardian__NoAdminTransferPending();
-        if (block.timestamp < adminTransferExecuteAfter) {
-            revert TimelockGuardian__AdminTransferNotReady();
-        }
-        if (msg.sender != admin && msg.sender != pendingAdmin) {
-            revert TimelockGuardian__OnlyAdmin();
-        }
-
-        address oldAdmin = admin;
-        admin = pendingAdmin;
-        pendingAdmin = address(0);
-        adminTransferExecuteAfter = 0;
-        emit AdminTransferred(oldAdmin, admin);
-    }
-
-    /**
-     * @notice Cancel a pending admin transfer (guardian only)
-     */
-    function cancelAdminTransfer() external onlyGuardian {
-        if (pendingAdmin == address(0)) revert TimelockGuardian__NoAdminTransferPending();
-        pendingAdmin = address(0);
-        adminTransferExecuteAfter = 0;
+        emit AdminTransferred(admin, newAdmin);
+        admin = newAdmin;
     }
 
     /**

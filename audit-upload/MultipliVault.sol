@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.34;
 
-import { Errors } from "src/libraries/Errors.sol";
-import { IMultipliVault } from "src/interfaces/IMultipliVault.sol";
-import { IVariableVaultFee } from "src/interfaces/IVariableVaultFee.sol";
-import { IMultipliVaultCallee } from "src/interfaces/IMultipliVaultCallee.sol";
+import { Errors } from "../libraries/Errors.sol";
+import { IMultipliVault } from "../interfaces/IMultipliVault.sol";
+import { IVariableVaultFee } from "../interfaces/IVariableVaultFee.sol";
+import { IMultipliVaultCallee } from "../interfaces/IMultipliVaultCallee.sol";
 
-import { VaultFeeUpgradeable } from "src/base/VaultFeeUpgradeable.sol";
-import { AuthUpgradeable, Authority } from "src/base/AuthUpgradeable.sol";
-import { FundMovementHelperUpgradeable } from "src/base/FundMovementHelperUpgradeable.sol";
+import { VaultFeeUpgradeable } from "../base/VaultFeeUpgradeable.sol";
+import { AuthUpgradeable, Authority } from "../base/AuthUpgradeable.sol";
+import { FundMovementHelperUpgradeable } from "../base/FundMovementHelperUpgradeable.sol";
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
@@ -122,12 +122,6 @@ contract MultipliVault is
         uint256 minDepositAmount;
         /// @dev Mapping to store pending redemption requests for each user
         mapping(address user => PendingRedeem redeem) pendingRedeem;
-        /// @dev Vault-level withdrawal cap per 24h epoch (0 = disabled)
-        uint256 maxGlobalWithdrawalPerEpoch;
-        /// @dev Cumulative withdrawals in the current epoch
-        uint256 globalEpochWithdrawals;
-        /// @dev Timestamp when the current epoch started
-        uint256 globalLastEpochReset;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -269,25 +263,12 @@ contract MultipliVault is
     }
 
     /**
-     * @notice Set the vault-level maximum withdrawal per 24h epoch
-     * @param newCap The new cap amount (0 = disabled)
-     * @dev Defense-in-depth: enforced on all removeFunds calls regardless of which
-     *      VaultFundManager is used. Prevents bypass via multiple manager contracts.
-     */
-    function setMaxGlobalWithdrawalPerEpoch(uint256 newCap) public requiresAuth {
-        MultipliVaultStorage storage $ = _getMultipliVaultStorage();
-        emit GlobalWithdrawalCapUpdated($.maxGlobalWithdrawalPerEpoch, newCap);
-        $.maxGlobalWithdrawalPerEpoch = newCap;
-    }
-
-    /**
      * @notice Remove funds from the vault to a whitelisted recipient
      * @param amount The amount of assets to transfer
      * @param to The address to receive the funds (must be whitelisted)
      * @dev Can only be called by authorized users
      */
     function removeFunds(uint256 amount, address to) public requiresAuth {
-        _enforceGlobalWithdrawalCap(amount);
         _removeFunds(asset(), amount, to);
     }
 
@@ -804,30 +785,6 @@ contract MultipliVault is
     }
 
     /**
-     * @notice Get the vault-level maximum withdrawal per 24h epoch
-     * @return The max withdrawal cap (0 = disabled)
-     */
-    function maxGlobalWithdrawalPerEpoch() public view returns (uint256) {
-        return _getMultipliVaultStorage().maxGlobalWithdrawalPerEpoch;
-    }
-
-    /**
-     * @notice Get the cumulative withdrawals in the current epoch
-     * @return The total withdrawn in the current epoch
-     */
-    function globalEpochWithdrawals() public view returns (uint256) {
-        return _getMultipliVaultStorage().globalEpochWithdrawals;
-    }
-
-    /**
-     * @notice Get the timestamp when the current epoch started
-     * @return The epoch start timestamp
-     */
-    function globalLastEpochReset() public view returns (uint256) {
-        return _getMultipliVaultStorage().globalLastEpochReset;
-    }
-
-    /**
      * @notice Override the default `totalAssets` function to include aggregated underlying balances
      * @return The total assets held by the vault and across all strategies
      */
@@ -1119,14 +1076,9 @@ contract MultipliVault is
         // Execute the withdrawal
         super._withdraw(address(this), receiver, address(this), assets, shares);
 
-        // Transfer fees to fee recipient — use low-level call so a reverting
-        // recipient cannot block all user withdrawals (Hashlock audit finding #8)
+        // Transfer fees to fee recipient if applicable
         if (feeAmount > 0 && recipient != address(0)) {
-            // solhint-disable-next-line avoid-low-level-calls
-            (bool success,) = token.call(abi.encodeCall(IERC20.transfer, (recipient, feeAmount)));
-            if (!success) {
-                emit FeeTransferFailed(recipient, token, feeAmount);
-            }
+            IERC20(token).safeTransfer(recipient, feeAmount);
         }
     }
 
@@ -1137,35 +1089,6 @@ contract MultipliVault is
      * @custom:security Prevents unauthorized upgrades that could compromise the protocol
      */
     function _authorizeUpgrade(address newImplementation) internal virtual override requiresAuth { }
-
-    /*//////////////////////////////////////////////////////////////
-                      PRIVATE STATE-CHANGING FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Enforce vault-level global withdrawal cap per 24h epoch
-     * @param amount The withdrawal amount to check
-     * @dev Defense-in-depth: this cap lives at the vault level and cannot be bypassed
-     *      by deploying multiple VaultFundManager contracts. Resets epoch counter if
-     *      24 hours have passed. If maxGlobalWithdrawalPerEpoch is 0, the cap is disabled.
-     */
-    function _enforceGlobalWithdrawalCap(uint256 amount) private {
-        MultipliVaultStorage storage $ = _getMultipliVaultStorage();
-        uint256 cap = $.maxGlobalWithdrawalPerEpoch;
-        if (cap == 0) return;
-
-        if (block.timestamp > $.globalLastEpochReset + 24 hours) {
-            $.globalEpochWithdrawals = 0;
-            $.globalLastEpochReset = block.timestamp;
-        }
-
-        uint256 remaining = cap - $.globalEpochWithdrawals;
-        if (amount > remaining) {
-            revert Errors.Errors__GlobalWithdrawalCapExceeded(amount, remaining);
-        }
-
-        $.globalEpochWithdrawals += amount;
-    }
 
     /*//////////////////////////////////////////////////////////////
                       PRIVATE READ-ONLY FUNCTIONS

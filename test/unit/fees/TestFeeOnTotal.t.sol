@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.34;
+pragma solidity 0.8.34;
 
-import {FeeBase} from "./Base.t.sol";
+import {FeeBase} from "test/unit/fees/Base.t.sol";
 import {IVariableVaultFee} from "src/interfaces/IVariableVaultFee.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract TestFeeOnTotal is FeeBase {
     function setUp() public virtual override {
@@ -50,23 +49,23 @@ contract TestFeeOnTotal is FeeBase {
         uint256 instantWithdrawalFee = feeContract.feeOnTotal(address(token), getQuantizedValue(100), IVariableVaultFee.FeeOperation.INSTANT_WITHDRAWAL);
         uint256 flashRedeemFee = feeContract.feeOnTotal(address(token), getQuantizedValue(100), IVariableVaultFee.FeeOperation.FLASH_REDEEM);
 
-        if(config.tokenConfig.decimals == 6){
+        if (config.tokenConfig.decimals == 6) {
             assertEq(depositFee, 1_960_785); // ≈ 2% of total including fees (1960784.3137254901 -> 1_960_785)
             assertEq(withdrawalFee, 990_100); // ≈ 1% of total including fees (990_099.0099009901 -> 990_100)
             assertEq(instantWithdrawalFee, 2_912_622); // ≈ 3% of total including fees (2_912_621.359223301 -> 2_912_622)
             assertEq(flashRedeemFee, 3_846_154); // ≈ 4% of total including fees (3_846_153.846153846 -> 3_846_154)
-        } else if(config.tokenConfig.decimals == 8){
+        } else if (config.tokenConfig.decimals == 8) {
             assertEq(depositFee, 1_960_784_32); // ≈ 2% of total including fees (196078431.37254901 -> 196078432)
             assertEq(withdrawalFee, 990_099_01); // ≈ 1% of total including fees (99009900.99009901 -> 99009901)
             assertEq(instantWithdrawalFee, 291_262_136); // ≈ 3% of total including fees (291262135.9223301 -> 291262136)
             assertEq(flashRedeemFee, 384_615_385); // ≈ 4% of total including fees (384615384.6153846 -> 384615385)
-        } else if(config.tokenConfig.decimals == 18){
+        } else if (config.tokenConfig.decimals == 18) {
             assertEq(depositFee, 196_078_431_372_549_019_7); // ≈ 2% of total including fees (1960784313725490197)
             assertEq(withdrawalFee, 990_099_009_900_990_100); // ≈ 1% of total including fees (990099009900990100)
             assertEq(instantWithdrawalFee, 291_262_135_922_330_097_1); // ≈ 3% of total including fees (2912621359223300971)
             assertEq(flashRedeemFee, 384_615_384_615_384_615_4); // ≈ 4% of total including fees (3846153846153846154)
-        }else{
-            revert('Condition not added for given decimals');
+        } else {
+            revert("Condition not added for given decimals");
         }
     }
 
@@ -288,8 +287,8 @@ contract TestFeeOnTotal is FeeBase {
             assertEq(iFee, 9999999901); // Smallest fee
             assertEq(wFee, 999999000001); // Small fee
             assertEq(frFee, 9999999901); // Smallest fee
-        } else{
-            revert('Condition not added for given decimals');
+        } else {
+            revert("Condition not added for given decimals");
         }
 
     }

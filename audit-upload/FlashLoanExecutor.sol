@@ -7,8 +7,8 @@ import {
     ReentrancyGuardTransient
 } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 
-import { IAaveV3Pool } from "src/interfaces/aave/IAaveV3Pool.sol";
-import { IFlashLoanStrategy } from "src/interfaces/IFlashLoanStrategy.sol";
+import { IAaveV3Pool } from "../interfaces/aave/IAaveV3Pool.sol";
+import { IFlashLoanStrategy } from "../interfaces/IFlashLoanStrategy.sol";
 
 /**
  * @title FlashLoanExecutor

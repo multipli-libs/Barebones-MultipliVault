@@ -2,6 +2,9 @@
   "lib/forge-std": {
     "rev": "bb8647a62b45ede74e0561887a495810776a752f"
   },
+  "lib/foundry-huff": {
+    "rev": "7d1ce15ccf92bd68458c7e28e0ae847b64b4fc74"
+  },
   "lib/openzeppelin-contracts": {
     "rev": "a1a0a67a2050f5b0edac2bb64ba679cb07a88943"
   },

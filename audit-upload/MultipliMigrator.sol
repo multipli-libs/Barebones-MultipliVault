@@ -2,9 +2,7 @@
 pragma solidity 0.8.34;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import {
-    ReentrancyGuardTransient
-} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
+import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 
 interface IMultipliVault {
     function adminMint(address receiver, uint256 shares) external;

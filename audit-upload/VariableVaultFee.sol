@@ -4,7 +4,7 @@ pragma solidity 0.8.34;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { IVariableVaultFee } from "src/interfaces/IVariableVaultFee.sol";
+import { IVariableVaultFee } from "../interfaces/IVariableVaultFee.sol";
 
 /**
  * @title VariableVaultFee

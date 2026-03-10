@@ -2,35 +2,36 @@
 
 pragma solidity 0.8.34;
 
-import { BaseTest } from "./Base.t.sol";
+import { BaseTest } from "test/unit/vault/Base.t.sol";
 import { VaultFundManager } from "src/managers/VaultFundManager.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { MockOperator, MockMaliciousOperator } from "../../mocks/MockOperator.sol";
-import { MockAuthority } from "../../mocks/MockAuthority.sol";
+import { MockOperator, MockMaliciousOperator } from "test/mocks/MockOperator.sol";
+import { MockAuthority } from "test/mocks/MockAuthority.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IVariableVaultFee } from "src/interfaces/IVariableVaultFee.sol";
 import { MultipliVault } from "src/vault/MultipliVault.sol";
-import { MockMultipliVaultV2 } from "../../mocks/MockMultipliVaultV2.sol";
-import { ZeroFeeRecipient } from "../../mocks/ZeroFeeRecipient.sol";
-import {IMultipliVault} from "src/interfaces/IMultipliVault.sol";
-import {IMultipliVaultCallee} from "src/interfaces/IMultipliVaultCallee.sol";
+import { ZeroFeeRecipient } from "test/mocks/ZeroFeeRecipient.sol";
+import { IMultipliVault } from "src/interfaces/IMultipliVault.sol";
+import { IMultipliVaultCallee } from "src/interfaces/IMultipliVaultCallee.sol";
 
 import { Errors } from "src/libraries/Errors.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 contract SharePriceConsistencyOperator is IMultipliVaultCallee {
+    error SharePriceConsistencyOperator__SharesMismatch();
+    error SharePriceConsistencyOperator__AssetsMismatch();
+    error SharePriceConsistencyOperator__TransferFailed();
+
     MultipliVault public vault;
     IERC20 public asset;
     uint256 private expectedShares;
     uint256 private expectedAssetsWithFee;
     bool public consistencyVerified;
 
-    function setVault(MultipliVault _vault, address _asset) external { 
-        vault = _vault; 
+    function setVault(MultipliVault _vault, address _asset) external {
+        vault = _vault;
         asset = IERC20(_asset);
     }
-    
+
     function setExpectedValues(uint256 _shares, uint256 _assetsWithFee) external {
         expectedShares = _shares;
         expectedAssetsWithFee = _assetsWithFee;
@@ -44,18 +45,21 @@ contract SharePriceConsistencyOperator is IMultipliVaultCallee {
         uint256,
         bytes calldata
     ) external override {
-        require(shares == expectedShares, "Shares mismatch");
-        
+        if (shares != expectedShares) {
+            revert SharePriceConsistencyOperator__SharesMismatch();
+        }
+
         // Verify convertToAssets remains consistent during callback
         uint256 currentAssetsWithFee = vault.convertToAssets(shares);
-        
-        require(
-            currentAssetsWithFee == expectedAssetsWithFee, 
-            "convertToAssets changed during flash loan"
-        );
-        
+
+        if (currentAssetsWithFee != expectedAssetsWithFee) {
+            revert SharePriceConsistencyOperator__AssetsMismatch();
+        }
+
         // Transfer vault shares back to complete the flash loan
-        IERC20(address(vault)).transfer(vaultAddress, shares);
+        if (!IERC20(address(vault)).transfer(vaultAddress, shares)) {
+            revert SharePriceConsistencyOperator__TransferFailed();
+        }
         consistencyVerified = true;
     }
 }

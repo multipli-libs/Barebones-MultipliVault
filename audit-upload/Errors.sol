@@ -134,11 +134,4 @@ library Errors {
      * @notice Thrown when adminBurn exceeds the per-call cap
      */
     error Errors__AdminBurnCapExceeded(uint256 shares, uint256 cap);
-
-    /**
-     * @notice Thrown when vault-level global withdrawal cap is exceeded
-     * @param amount The requested withdrawal amount
-     * @param remaining The remaining capacity in the current epoch
-     */
-    error Errors__GlobalWithdrawalCapExceeded(uint256 amount, uint256 remaining);
 }

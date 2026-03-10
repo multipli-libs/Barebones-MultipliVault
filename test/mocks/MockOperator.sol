@@ -6,10 +6,11 @@ import {IMultipliVaultCallee} from "src/interfaces/IMultipliVaultCallee.sol";
 import {MultipliVault} from "src/vault/MultipliVault.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Errors} from "src/libraries/Errors.sol";
-import {console} from "forge-std/console.sol";
 
 // Third party controlled Operator
 abstract contract _BaseMockOperator is IMultipliVaultCallee {
+    error MockOperator__VaultNotSet();
+
     MultipliVault vault;
 
     function onRedemptionFlashLoan(
@@ -22,9 +23,11 @@ abstract contract _BaseMockOperator is IMultipliVaultCallee {
     ) external virtual;
 
     // helper function for tests
-    function mint(uint256 shares) virtual public {
-        require(address(vault) != address(0), "use `setVault()` before calling this method");
-        
+    function mint(uint256 shares) public virtual {
+        if (address(vault) == address(0)) {
+            revert MockOperator__VaultNotSet();
+        }
+
         // set allowance
         address asset = vault.asset();
         uint256 allowance = IERC20(asset).allowance({owner: address(this), spender: address(vault)});
@@ -44,7 +47,6 @@ abstract contract _BaseMockOperator is IMultipliVaultCallee {
 }
 
 contract MockOperator is _BaseMockOperator {
-
     function onRedemptionFlashLoan(
         address initiator,
         address _asset,
@@ -56,15 +58,13 @@ contract MockOperator is _BaseMockOperator {
         if (IERC20(_asset).balanceOf(address(this)) < _shares) {
             revert Errors.Errors__InsufficientShares();
         }
-        
+
         // transfer the shares back to the vault
         IERC20(_asset).transfer(_asset, _shares);
     }
-
 }
 
 contract MockMaliciousOperator is _BaseMockOperator {
-
     function onRedemptionFlashLoan(
         address initiator,
         address _asset,
@@ -75,5 +75,4 @@ contract MockMaliciousOperator is _BaseMockOperator {
     ) external override {
         // do not return funds
     }
-
 }

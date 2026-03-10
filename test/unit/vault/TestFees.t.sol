@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.34;
 
-import {BaseTest} from "./Base.t.sol";
+import {BaseTest} from "test/unit/vault/Base.t.sol";
 
 import {IVariableVaultFee} from "src/interfaces/IVariableVaultFee.sol";
 import {VariableVaultFee} from "src/fees/VariableVaultFee.sol";
@@ -80,9 +80,9 @@ contract TestVaultFeeOperations is BaseTest {
         deal(address(token), bob, getQuantizedValue(1_000_000)); // 1M tokens
         deal(address(token), charlie, getQuantizedValue(1_000_000)); // 1M tokens
 
-        require(token.balanceOf(alice) == getQuantizedValue(1_000_000), "Pre-requisite balance check failed"); // 1M tokens
-        require(token.balanceOf(bob) == getQuantizedValue(1_000_000), "Pre-requisite balance check failed"); // 1M tokens
-        require(token.balanceOf(charlie) == getQuantizedValue(1_000_000), "Pre-requisite balance check failed"); // 1M tokens
+        assertEq(token.balanceOf(alice), getQuantizedValue(1_000_000), "Pre-requisite balance check failed");
+        assertEq(token.balanceOf(bob), getQuantizedValue(1_000_000), "Pre-requisite balance check failed");
+        assertEq(token.balanceOf(charlie), getQuantizedValue(1_000_000), "Pre-requisite balance check failed");
     }
 
     function _setupFlatFeeConfig() internal returns (IVariableVaultFee.AssetFeeConfig memory) {
@@ -143,9 +143,9 @@ contract TestVaultFeeOperations is BaseTest {
 
         // Sanity checks
         {
-            require(aliceTokensBefore == getQuantizedValue(1_000_000), "Alice balance does not match expectation");
-            require(feeRecipientBefore == 0, "feeRecipientBefore balance does not match expectation");
-            require(vaultTokensBefore == 0, "Vault balance does not match expectation");
+            assertEq(aliceTokensBefore, getQuantizedValue(1_000_000), "Alice balance does not match expectation");
+            assertEq(feeRecipientBefore, 0, "feeRecipientBefore balance does not match expectation");
+            assertEq(vaultTokensBefore, 0, "Vault balance does not match expectation");
         }
 
         vm.startPrank(alice);
