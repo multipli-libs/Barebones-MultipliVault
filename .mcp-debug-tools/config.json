@@ -1,7 +1,8 @@
 {
-  "vscodeInstanceId": "vscode-89338-1772947969255",
-  "port": 8890,
-  "pid": 89338,
-  "workspacePath": "/Users/hs/HUBSVULT",
-  "workspaceName": "HUBSVULT"
+  "//": "Local debug configuration template. Do NOT commit real machine-specific values. Add `.mcp-debug-tools/` or this file to .gitignore.",
+  "vscodeInstanceId": "",
+  "port": 0,
+  "pid": 0,
+  "workspacePath": "",
+  "workspaceName": ""
 }
