@@ -2,6 +2,9 @@
 pragma solidity 0.8.34;
 
 import { IAccount, PackedUserOperation } from "src/interfaces/erc4337/IAccount.sol";
+import { SovereignTokenTypes } from "src/sovereign/SovereignTokenTypes.sol";
+import { IERC6909, IERC6909TokenSupply } from "lib/openzeppelin-contracts/contracts/interfaces/IERC6909.sol";
+import { IERC165 } from "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 // ═══════════════════════════════════════════════════════════════
 //
@@ -50,7 +53,7 @@ import { IAccount, PackedUserOperation } from "src/interfaces/erc4337/IAccount.s
  *      WARNING: This is experimental — get an audit before deploying to mainnet.
  * @custom:security-contact security@sovereign.account
  */
-contract SovereignAccount is IAccount {
+contract SovereignAccount is IAccount, IERC6909TokenSupply {
     /*//////////////////////////////////////////////////////////////
                             TYPE DECLARATIONS
     //////////////////////////////////////////////////////////////*/
@@ -123,6 +126,7 @@ contract SovereignAccount is IAccount {
     );
 
     address public immutable ENTRY_POINT;
+    address private immutable SELF;
 
     address public owner;
 
@@ -147,6 +151,11 @@ contract SovereignAccount is IAccount {
     uint48 public recoveryCreatedAt;
     uint256 public recoveryNonce;
     mapping(bytes32 recoveryHash => mapping(address guardian => bool voted)) public recoveryVotes;
+    mapping(address account_ => mapping(uint256 id => uint256 amount)) internal erc6909Balances;
+    mapping(address owner_ => mapping(address spender => mapping(uint256 id => uint256 amount)))
+        internal erc6909Allowances;
+    mapping(address owner_ => mapping(address spender => bool approved)) internal erc6909Operators;
+    mapping(uint256 id => uint256 amount) internal erc6909TotalSupply;
 
     /*//////////////////////////////////////////////////////////////
                                 EVENTS
@@ -189,6 +198,9 @@ contract SovereignAccount is IAccount {
     error SovereignAccount__RecoveryAlreadyActive();
     error SovereignAccount__RecoveryExpired();
     error SovereignAccount__InvalidThreshold();
+    error SovereignAccount__InsufficientBalance(uint256 available, uint256 required);
+    error SovereignAccount__InsufficientAllowance(uint256 available, uint256 required);
+    error SovereignAccount__EthForwardFailed();
 
     /*//////////////////////////////////////////////////////////////
                               CONSTRUCTOR
@@ -198,6 +210,7 @@ contract SovereignAccount is IAccount {
         if (_owner == address(0) || _entryPoint == address(0)) {
             revert SovereignAccount__ZeroAddress();
         }
+        SELF = address(this);
         owner = _owner;
         ENTRY_POINT = _entryPoint;
 
@@ -213,7 +226,9 @@ contract SovereignAccount is IAccount {
                           RECEIVE / FALLBACK
     //////////////////////////////////////////////////////////////*/
 
-    receive() external payable { }
+    receive() external payable {
+        _forwardNativeToOwner();
+    }
 
     fallback() external payable {
         address handler = fallbackHandlers[msg.sig];
@@ -470,9 +485,149 @@ contract SovereignAccount is IAccount {
         emit OwnerChanged(old, newOwner);
     }
 
+    function approve(address spender, uint256 id, uint256 amount) external returns (bool) {
+        _requireErc6909HolderAuthorized();
+        _touchActivity();
+        _approve6909(_erc6909Holder(), spender, id, amount);
+        return true;
+    }
+
+    /// @notice Approve a flat 4-byte token type for spending.
+    /// @dev Ref helpers intentionally operate on the base type id from
+    ///      SovereignTokenTypes.toId(typeId). Use the raw ERC-6909 functions with
+    ///      a packed id when working with non-zero subIds.
+    function approveRef(address spender, bytes4 typeId, uint256 amount) external returns (bool) {
+        _requireErc6909HolderAuthorized();
+        _touchActivity();
+        _approve6909(_erc6909Holder(), spender, SovereignTokenTypes.toId(typeId), amount);
+        return true;
+    }
+
+    function setOperator(address spender, bool approved) external returns (bool) {
+        _requireErc6909HolderAuthorized();
+        _touchActivity();
+        address actor = _erc6909Holder();
+        erc6909Operators[actor][spender] = approved;
+        emit OperatorSet(actor, spender, approved);
+        return true;
+    }
+
+    function transfer(address receiver, uint256 id, uint256 amount) external returns (bool) {
+        _requireErc6909HolderAuthorized();
+        _touchActivity();
+        _transfer6909(_erc6909Holder(), receiver, id, amount);
+        return true;
+    }
+
+    /// @notice Transfer a flat 4-byte token type.
+    /// @dev Ref helpers target the base type id only; packed ids must be handled
+    ///      through the raw ERC-6909 transfer functions.
+    function transferRef(address receiver, bytes4 typeId, uint256 amount) external returns (bool) {
+        _requireErc6909HolderAuthorized();
+        _touchActivity();
+        _transfer6909(_erc6909Holder(), receiver, SovereignTokenTypes.toId(typeId), amount);
+        return true;
+    }
+
+    function transferFrom(address sender, address receiver, uint256 id, uint256 amount)
+        external
+        returns (bool)
+    {
+        _requireErc6909SpenderAuthorized();
+        _touchActivity();
+        address actor = _erc6909Actor();
+        _spendAllowance6909(sender, actor, id, amount);
+        _transfer6909(sender, receiver, id, amount);
+        return true;
+    }
+
+    /// @notice Transfer a flat 4-byte token type on behalf of a holder.
+    /// @dev Ref helpers target the base type id only; packed ids must be handled
+    ///      through the raw ERC-6909 transfer functions.
+    function transferFromRef(address sender, address receiver, bytes4 typeId, uint256 amount)
+        external
+        returns (bool)
+    {
+        _requireErc6909SpenderAuthorized();
+        _touchActivity();
+        uint256 id = SovereignTokenTypes.toId(typeId);
+        address actor = _erc6909Actor();
+        _spendAllowance6909(sender, actor, id, amount);
+        _transfer6909(sender, receiver, id, amount);
+        return true;
+    }
+
+    function mint(address receiver, uint256 id, uint256 amount) external {
+        _requireDirectOwner();
+        _mint6909(_erc6909Actor(), receiver, id, amount);
+    }
+
+    /// @notice Mint a flat 4-byte token type.
+    /// @dev Ref helpers target the base type id only; packed ids must be minted
+    ///      through the raw ERC-6909 mint path.
+    function mintRef(address receiver, bytes4 typeId, uint256 amount) external {
+        _requireDirectOwner();
+        _mint6909(_erc6909Actor(), receiver, SovereignTokenTypes.toId(typeId), amount);
+    }
+
+    function burn(address holder, uint256 id, uint256 amount) external {
+        _requireDirectOwner();
+        _burn6909(_erc6909Actor(), holder, id, amount);
+    }
+
+    /// @notice Burn a flat 4-byte token type.
+    /// @dev Ref helpers target the base type id only; packed ids must be burned
+    ///      through the raw ERC-6909 burn path.
+    function burnRef(address holder, bytes4 typeId, uint256 amount) external {
+        _requireDirectOwner();
+        _burn6909(_erc6909Actor(), holder, SovereignTokenTypes.toId(typeId), amount);
+    }
+
     /*//////////////////////////////////////////////////////////////
                       USER-FACING READ-ONLY FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+        return interfaceId == type(IERC165).interfaceId
+            || interfaceId == type(IERC6909).interfaceId
+            || interfaceId == type(IERC6909TokenSupply).interfaceId;
+    }
+
+    function balanceOf(address owner_, uint256 id) external view returns (uint256) {
+        return erc6909Balances[owner_][id];
+    }
+
+    /// @notice Read balance for a flat 4-byte token type.
+    /// @dev Packed ids with non-zero subIds are not aggregated into this view.
+    function balanceOfRef(address owner_, bytes4 typeId) external view returns (uint256) {
+        return erc6909Balances[owner_][SovereignTokenTypes.toId(typeId)];
+    }
+
+    function allowance(address owner_, address spender, uint256 id) external view returns (uint256) {
+        return erc6909Allowances[owner_][spender][id];
+    }
+
+    function allowanceRef(address owner_, address spender, bytes4 typeId)
+        external
+        view
+        returns (uint256)
+    {
+        return erc6909Allowances[owner_][spender][SovereignTokenTypes.toId(typeId)];
+    }
+
+    function isOperator(address owner_, address spender) external view returns (bool) {
+        return erc6909Operators[owner_][spender];
+    }
+
+    function totalSupply(uint256 id) external view returns (uint256) {
+        return erc6909TotalSupply[id];
+    }
+
+    /// @notice Read total supply for a flat 4-byte token type.
+    /// @dev Packed ids with non-zero subIds are not aggregated into this view.
+    function totalSupplyRef(bytes4 typeId) external view returns (uint256) {
+        return erc6909TotalSupply[SovereignTokenTypes.toId(typeId)];
+    }
 
     /// @notice Returns the spending tier for a karma score.
     ///  Karma tiers:
@@ -661,6 +816,48 @@ contract SovereignAccount is IAccount {
         emit OwnerChanged(oldOwner, newOwner);
     }
 
+    function _approve6909(address owner_, address spender, uint256 id, uint256 amount) internal {
+        erc6909Allowances[owner_][spender][id] = amount;
+        emit Approval(owner_, spender, id, amount);
+    }
+
+    function _transfer6909(address sender, address receiver, uint256 id, uint256 amount) internal {
+        if (sender == address(0) || receiver == address(0)) revert SovereignAccount__ZeroAddress();
+
+        uint256 senderBalance = erc6909Balances[sender][id];
+        if (senderBalance < amount) {
+            revert SovereignAccount__InsufficientBalance(senderBalance, amount);
+        }
+
+        erc6909Balances[sender][id] = senderBalance - amount;
+        erc6909Balances[receiver][id] += amount;
+
+        emit Transfer(_erc6909Actor(), sender, receiver, id, amount);
+    }
+
+    function _mint6909(address caller_, address receiver, uint256 id, uint256 amount) internal {
+        if (receiver == address(0)) revert SovereignAccount__ZeroAddress();
+
+        erc6909Balances[receiver][id] += amount;
+        erc6909TotalSupply[id] += amount;
+
+        emit Transfer(caller_, address(0), receiver, id, amount);
+    }
+
+    function _burn6909(address caller_, address holder, uint256 id, uint256 amount) internal {
+        if (holder == address(0)) revert SovereignAccount__ZeroAddress();
+
+        uint256 holderBalance = erc6909Balances[holder][id];
+        if (holderBalance < amount) {
+            revert SovereignAccount__InsufficientBalance(holderBalance, amount);
+        }
+
+        erc6909Balances[holder][id] = holderBalance - amount;
+        erc6909TotalSupply[id] -= amount;
+
+        emit Transfer(caller_, holder, address(0), id, amount);
+    }
+
     /// @dev EIP-1153: store validated signer in transient storage so execution
     ///      phase knows who authenticated without a permanent SSTORE (~100 gas vs ~20,000).
     function _tStoreSigner(address signer) internal {
@@ -682,10 +879,21 @@ contract SovereignAccount is IAccount {
         lastActivity = uint48(block.timestamp);
     }
 
+    function _forwardNativeToOwner() internal {
+        if (msg.value == 0) return;
+
+        (bool success,) = owner.call{value: msg.value}("");
+        if (!success) revert SovereignAccount__EthForwardFailed();
+    }
+
     function _requireOwner() internal view {
         if (msg.sender != owner && msg.sender != address(this)) {
             revert SovereignAccount__Unauthorized();
         }
+    }
+
+    function _requireDirectOwner() internal view {
+        if (msg.sender != owner) revert SovereignAccount__Unauthorized();
     }
 
     function _requireEntryPointOrOwner() internal view {
@@ -727,8 +935,12 @@ contract SovereignAccount is IAccount {
         return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
     }
 
-    function _tLoadSigner() internal view returns (address signer) {
+    function _tLoadSignerRaw() internal view returns (address signer) {
         assembly { signer := tload(_SIGNER_SLOT) }
+    }
+
+    function _tLoadSigner() internal view returns (address signer) {
+        signer = _tLoadSignerRaw();
         if (signer == address(0)) signer = msg.sender;
     }
 
@@ -746,5 +958,85 @@ contract SovereignAccount is IAccount {
         returns (uint256)
     {
         return (uint256(validAfter) << 208) | (uint256(validUntil) << 160) | authorizer;
+    }
+
+    function _spendAllowance6909(address sender, address spender, uint256 id, uint256 amount)
+        internal
+    {
+        if (spender == sender || erc6909Operators[sender][spender]) return;
+
+        uint256 currentAllowance = erc6909Allowances[sender][spender][id];
+        if (currentAllowance < amount) {
+            revert SovereignAccount__InsufficientAllowance(currentAllowance, amount);
+        }
+
+        if (currentAllowance != type(uint256).max) {
+            erc6909Allowances[sender][spender][id] = currentAllowance - amount;
+        }
+    }
+
+    function _erc6909Actor() internal view returns (address actor) {
+        actor = msg.sender;
+        if (actor == ENTRY_POINT || actor == address(this)) {
+            actor = address(this);
+        }
+    }
+
+    function _erc6909Holder() internal view returns (address holder) {
+        holder = msg.sender;
+        if (_isDelegateContext() || holder == ENTRY_POINT || holder == address(this)) {
+            holder = address(this);
+        }
+    }
+
+    function _isDelegateContext() internal view returns (bool) {
+        return address(this) != SELF;
+    }
+
+    function _requireErc6909Controller(address authorizedCaller) internal view {
+        if (authorizedCaller == owner) return;
+        if (signerPermissions[authorizedCaller] & PERM_EXECUTE != 0) return;
+
+        SessionKeyData storage skd = sessionKeys[authorizedCaller];
+        if (!skd.active) revert SovereignAccount__Unauthorized();
+        if (skd.permissions & PERM_EXECUTE == 0) revert SovereignAccount__Unauthorized();
+        if (block.timestamp < uint256(skd.validAfter)) revert SovereignAccount__Unauthorized();
+        if (skd.validUntil != 0 && block.timestamp > uint256(skd.validUntil)) {
+            revert SovereignAccount__Unauthorized();
+        }
+    }
+
+    function _requireErc6909WrappedAuthorized() internal view {
+        address authorizedCaller = msg.sender;
+
+        if (authorizedCaller != ENTRY_POINT && authorizedCaller != address(this)) {
+            return;
+        }
+
+        if (authorizedCaller == address(this)) {
+            authorizedCaller = _tLoadSignerRaw();
+            if (authorizedCaller == address(0)) {
+                if (tx.origin == address(this)) return;
+                revert SovereignAccount__Unauthorized();
+            }
+        } else {
+            authorizedCaller = _tLoadSigner();
+        }
+
+        _requireErc6909Controller(authorizedCaller);
+    }
+
+    function _requireErc6909HolderAuthorized() internal view {
+        if (_isDelegateContext()) {
+            _requireErc6909Controller(msg.sender);
+            return;
+        }
+
+        _requireErc6909WrappedAuthorized();
+    }
+
+    function _requireErc6909SpenderAuthorized() internal view {
+        if (_isDelegateContext()) return;
+        _requireErc6909WrappedAuthorized();
     }
 }

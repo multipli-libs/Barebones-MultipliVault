@@ -5,6 +5,9 @@ import {Test} from "forge-std/Test.sol";
 import {SovereignAccount} from "src/sovereign/SovereignAccount.sol";
 import {IAccount, PackedUserOperation} from "src/interfaces/erc4337/IAccount.sol";
 import {SovereignFactory} from "src/sovereign/SovereignFactory.sol";
+import {SovereignTokenTypes} from "src/sovereign/SovereignTokenTypes.sol";
+import {IERC6909, IERC6909TokenSupply} from "lib/openzeppelin-contracts/contracts/interfaces/IERC6909.sol";
+import {IERC165} from "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 /*//////////////////////////////////////////////////////////////
                     MOCK ENTRYPOINT
@@ -16,7 +19,7 @@ contract MockEntryPoint {
         bytes32 userOpHash
     ) external {
         uint256 validation = IAccount(userOp.sender).validateUserOp(userOp, userOpHash, 0);
-        if (uint160(validation) != 0) revert("validation failed");
+        if ((validation & type(uint160).max) != 0) revert("validation failed");
 
         (bool ok, bytes memory ret) = userOp.sender.call(userOp.callData);
         if (!ok) {
@@ -63,6 +66,30 @@ contract Target {
 contract GreeterHandler {
     function greet() external pure returns (string memory) {
         return "sovereign";
+    }
+}
+
+contract DelegateAccountProxy {
+    address internal immutable IMPLEMENTATION;
+
+    constructor(address _implementation) {
+        IMPLEMENTATION = _implementation;
+    }
+
+    receive() external payable { }
+
+    fallback() external payable {
+        address impl = IMPLEMENTATION;
+
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+            let ok := delegatecall(gas(), impl, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+
+            switch ok
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
+        }
     }
 }
 
@@ -135,6 +162,18 @@ contract SovereignAccountTest is Test {
 
     function _ethHash(bytes32 hash) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+    }
+
+    function _erc6909BalanceSlot(address holder, uint256 id) internal pure returns (bytes32) {
+        return keccak256(abi.encode(id, keccak256(abi.encode(holder, uint256(13)))));
+    }
+
+    function _erc6909TotalSupplySlot(uint256 id) internal pure returns (bytes32) {
+        return keccak256(abi.encode(id, uint256(16)));
+    }
+
+    function _ownerSlot() internal pure returns (bytes32) {
+        return bytes32(uint256(0));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -554,8 +593,17 @@ contract SovereignAccountTest is Test {
     }
 
     function test_fallbackNoHandlerReverts() public {
-        vm.expectRevert(SovereignAccount.SovereignAccount__Unauthorized.selector);
-        address(account).call(abi.encodeWithSignature("nonexistent()"));
+        (bool ok, bytes memory revertData) = address(account).call(abi.encodeWithSignature("nonexistent()"));
+
+        assertFalse(ok);
+        assertEq(revertData.length, 4);
+
+        bytes4 revertSelector;
+        assembly {
+            revertSelector := mload(add(revertData, 0x20))
+        }
+
+        assertEq(revertSelector, SovereignAccount.SovereignAccount__Unauthorized.selector);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -604,9 +652,13 @@ contract SovereignAccountTest is Test {
 
     function test_receiveEth() public {
         vm.deal(address(this), 1 ether);
+        assertEq(owner.balance, 0);
+
         (bool ok,) = address(account).call{value: 1 ether}("");
+
         assertTrue(ok);
-        assertEq(address(account).balance, 101 ether);
+        assertEq(address(account).balance, 100 ether);
+        assertEq(owner.balance, 1 ether);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -624,6 +676,184 @@ contract SovereignAccountTest is Test {
         vm.prank(signer);
         vm.expectRevert(SovereignAccount.SovereignAccount__Unauthorized.selector);
         account.transferOwnership(signer);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                               ERC-6909
+    //////////////////////////////////////////////////////////////*/
+
+    function test_supportsErc6909Interfaces() public view {
+        assertTrue(account.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(account.supportsInterface(type(IERC6909).interfaceId));
+        assertTrue(account.supportsInterface(type(IERC6909TokenSupply).interfaceId));
+        assertFalse(account.supportsInterface(0xffffffff));
+    }
+
+    function test_mintRefAndTransferRef() public {
+        bytes4 typeId = SovereignTokenTypes.VAULT_SHARE;
+        uint256 id = SovereignTokenTypes.toId(typeId);
+
+        vm.prank(owner);
+        account.mintRef(owner, typeId, 100);
+
+        assertEq(account.balanceOfRef(owner, typeId), 100);
+        assertEq(account.totalSupply(id), 100);
+
+        vm.prank(owner);
+        account.transferRef(signer, typeId, 40);
+
+        assertEq(account.balanceOf(owner, id), 60);
+        assertEq(account.balanceOf(signer, id), 40);
+        assertEq(account.totalSupplyRef(typeId), 100);
+    }
+
+    function test_transferFromRefConsumesAllowance() public {
+        bytes4 typeId = SovereignTokenTypes.REWARD_CLAIM;
+
+        vm.prank(owner);
+        account.mintRef(owner, typeId, 100);
+
+        vm.prank(owner);
+        account.approveRef(signer, typeId, 30);
+
+        vm.prank(signer);
+        account.transferFromRef(owner, sessionAddr, typeId, 20);
+
+        assertEq(account.balanceOfRef(owner, typeId), 80);
+        assertEq(account.balanceOfRef(sessionAddr, typeId), 20);
+        assertEq(account.allowanceRef(owner, signer, typeId), 10);
+    }
+
+    function test_userOpApproveActsOnAccountBalance() public {
+        uint256 id = SovereignTokenTypes.toId(SovereignTokenTypes.VAULT_SHARE);
+
+        vm.prank(owner);
+        account.mint(address(account), id, 100);
+
+        bytes memory cd = abi.encodeCall(SovereignAccount.approve, (signer, id, 60));
+        PackedUserOperation memory userOp = _buildUserOp(cd, "");
+        bytes32 h = ep.hashOp(userOp);
+        userOp.signature = _signAsOwner(h);
+
+        ep.handleOp(userOp, h);
+
+        assertEq(account.allowance(address(account), signer, id), 60);
+
+        vm.prank(signer);
+        account.transferFrom(address(account), sessionAddr, id, 25);
+
+        assertEq(account.balanceOf(address(account), id), 75);
+        assertEq(account.balanceOf(sessionAddr, id), 25);
+        assertEq(account.allowance(address(account), signer, id), 35);
+    }
+
+    function test_userOpTransferActsOnAccountBalance() public {
+        uint256 id = SovereignTokenTypes.toId(SovereignTokenTypes.REWARD_CLAIM);
+
+        vm.prank(owner);
+        account.mint(address(account), id, 90);
+
+        bytes memory cd = abi.encodeCall(SovereignAccount.transfer, (signer, id, 45));
+        PackedUserOperation memory userOp = _buildUserOp(cd, "");
+        bytes32 h = ep.hashOp(userOp);
+        userOp.signature = _signAsOwner(h);
+
+        ep.handleOp(userOp, h);
+
+        assertEq(account.balanceOf(address(account), id), 45);
+        assertEq(account.balanceOf(signer, id), 45);
+    }
+
+    function test_roleSignerCanNestedSelfApproveWithTransientSigner() public {
+        uint256 id = SovereignTokenTypes.toId(SovereignTokenTypes.VAULT_SHARE);
+
+        vm.startPrank(owner);
+        account.setRole(signer, account.PERM_EXECUTE());
+        account.mint(address(account), id, 100);
+        vm.stopPrank();
+
+        bytes memory nestedCall = abi.encodeCall(SovereignAccount.approve, (sessionAddr, id, 55));
+        bytes memory cd = abi.encodeCall(SovereignAccount.execute, (address(account), 0, nestedCall));
+        PackedUserOperation memory userOp = _buildUserOp(cd, "");
+        bytes32 h = ep.hashOp(userOp);
+        userOp.signature = _signAsRoleSigner(h);
+
+        ep.handleOp(userOp, h);
+
+        assertEq(account.allowance(address(account), sessionAddr, id), 55);
+    }
+
+    function test_sessionKeyWithExecutePermissionCanApproveAccountBalanceViaUserOp() public {
+        uint256 id = SovereignTokenTypes.toId(SovereignTokenTypes.REWARD_CLAIM);
+
+        vm.startPrank(owner);
+        account.mint(address(account), id, 90);
+        account.createSessionKey(
+            sessionAddr,
+            account.PERM_EXECUTE(),
+            uint48(block.timestamp),
+            uint48(block.timestamp + 1 hours),
+            1 ether
+        );
+        vm.stopPrank();
+
+        bytes memory cd = abi.encodeCall(SovereignAccount.approve, (signer, id, 30));
+        PackedUserOperation memory userOp = _buildUserOp(cd, "");
+        bytes32 h = ep.hashOp(userOp);
+        userOp.signature = _signAsSessionKey(h);
+
+        ep.handleOp(userOp, h);
+
+        vm.prank(signer);
+        account.transferFrom(address(account), owner, id, 25);
+
+        assertEq(account.allowance(address(account), signer, id), 5);
+        assertEq(account.balanceOf(address(account), id), 65);
+        assertEq(account.balanceOf(owner, id), 25);
+    }
+
+    function test_delegateProxyCanUseErc6909ByRef() public {
+        bytes4 typeId = SovereignTokenTypes.VAULT_SHARE;
+        uint256 id = SovereignTokenTypes.toId(typeId);
+        DelegateAccountProxy proxy = new DelegateAccountProxy(address(account));
+        address accountContext = address(proxy);
+        SovereignAccount delegatedAccount = SovereignAccount(payable(accountContext));
+
+        vm.store(accountContext, _ownerSlot(), bytes32(uint256(uint160(owner))));
+        vm.store(accountContext, _erc6909BalanceSlot(accountContext, id), bytes32(uint256(50)));
+        vm.store(accountContext, _erc6909TotalSupplySlot(id), bytes32(uint256(50)));
+
+        vm.prank(owner);
+        delegatedAccount.approveRef(signer, typeId, 20);
+
+        vm.prank(owner);
+        delegatedAccount.transferRef(sessionAddr, typeId, 15);
+
+        vm.prank(signer);
+        delegatedAccount.transferFromRef(accountContext, owner, typeId, 5);
+
+        assertEq(delegatedAccount.allowanceRef(accountContext, signer, typeId), 15);
+        assertEq(delegatedAccount.balanceOfRef(accountContext, typeId), 30);
+        assertEq(delegatedAccount.balanceOfRef(sessionAddr, typeId), 15);
+        assertEq(delegatedAccount.balanceOfRef(owner, typeId), 5);
+        assertEq(delegatedAccount.totalSupplyRef(typeId), 50);
+    }
+
+    function test_sessionKeyWithoutExecutePermissionCannotUseErc6909EntryPoints() public {
+        uint256 id = SovereignTokenTypes.toId(SovereignTokenTypes.VAULT_SHARE);
+
+        vm.startPrank(owner);
+        account.mint(address(account), id, 10);
+        account.createSessionKey(sessionAddr, 0, uint48(block.timestamp), uint48(block.timestamp + 1 hours), 1 ether);
+        vm.stopPrank();
+
+        bytes memory cd = abi.encodeCall(SovereignAccount.transfer, (signer, id, 1));
+        PackedUserOperation memory userOp = _buildUserOp(cd, "");
+        bytes32 h = ep.hashOp(userOp);
+        userOp.signature = _signAsSessionKey(h);
+
+        vm.expectRevert(SovereignAccount.SovereignAccount__Unauthorized.selector);
+        ep.handleOp(userOp, h);
     }
 
     /*//////////////////////////////////////////////////////////////
