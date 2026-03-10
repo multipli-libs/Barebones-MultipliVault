@@ -73,7 +73,8 @@ abstract contract DeployMEVBase is Script {
         bool isFromTest = vm.envOr("IS_TEST", false);
 
         if (!isFromTest) {
-            vm.startBroadcast();
+            uint256 deployerKey = vm.envUint("MEV_DEPLOYER_KEY");
+            vm.startBroadcast(deployerKey);
         } else {
             vm.startPrank(OWNER);
         }
