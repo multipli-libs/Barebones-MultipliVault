@@ -4,10 +4,12 @@
 ERC-4626 compatible vault protocol for Real World Asset (RWA) yield via delta-neutral strategies. Deployed on Avalanche C-Chain with UUPS proxy upgradeability.
 
 ## Tech Stack
-- **Solidity 0.8.30** (pinned pragma across all files)
+- **Solidity 0.8.34** (pinned pragma across all files)
 - **Foundry** (forge, cast, anvil) — build, test, deploy
 - **OpenZeppelin Contracts Upgradeable v5.3.0** — ERC4626, UUPS, Pausable
+- **OpenZeppelin Contracts v5.3.0** — core modules via additional OZ remappings
 - **Solmate** — RolesAuthority (access control)
+- **Solady** — gas-optimised primitives via remappings
 - **Node.js v22** — for `@openzeppelin/upgrades-core` (upgrade safety checks)
 
 ## Repository Layout
