@@ -5,6 +5,7 @@ import {MigratorBaseTest} from "./Base.t.sol";
 import {MultipliMigrator} from "src/migrator/MultipliMigrator.sol";
 
 import {IMultipliVault} from "src/interfaces/IMultipliVault.sol";
+import {Errors} from "src/libraries/Errors.sol";
 
 
 contract TestAdminMintSingle is MigratorBaseTest {
@@ -84,7 +85,7 @@ contract TestAdminMintSingle is MigratorBaseTest {
         migrator.adminMintSingle(MIGRATION_ID, users.alice, ASSETS_AMOUNT, MIN_SHARES);
 
         // Try second migration in same block (should fail due to vault's one-per-block limit)
-        vm.expectRevert("Errors__UpdateAlreadyCompletedInThisBlock()");
+        vm.expectRevert(Errors.Errors__UpdateAlreadyCompletedInThisBlock.selector);
         migrator.adminMintSingle(MIGRATION_ID + 1, users.bob, ASSETS_AMOUNT, MIN_SHARES);
         vm.stopPrank();
     }

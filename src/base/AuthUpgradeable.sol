@@ -82,7 +82,11 @@ abstract contract AuthUpgradeable is Initializable {
      */
     function setAuthority(Authority newAuthority) public virtual {
         AuthStorage storage $ = _getAuthStorage();
-        if (msg.sender != $.owner && !$.authority.canCall(msg.sender, address(this), msg.sig)) {
+        if (
+            msg.sender != $.owner
+                && (address($.authority) == address(0)
+                    || !$.authority.canCall(msg.sender, address(this), msg.sig))
+        ) {
             revert AuthUpgradeable__Unauthorized();
         }
         $.authority = newAuthority;

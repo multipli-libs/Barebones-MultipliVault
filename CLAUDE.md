@@ -11,7 +11,7 @@ ERC-4626 compatible vault protocol for Real World Asset (RWA) yield via delta-ne
 - Treat `VaultFundManager`, `FlashLoanExecutor`, and `TimelockGuardian` as high-sensitivity components.
 
 ## Tech Stack
-- **Solidity 0.8.34** (pinned pragma across all files)
+- **Solidity 0.8.34** (pinned pragma for concrete contracts; floating pragma for interfaces, libraries, and abstract contracts)
 - **Foundry** (forge, cast, anvil) — build, test, deploy
 - **OpenZeppelin Contracts Upgradeable v5.3.0** — ERC4626, UUPS, Pausable
 - **Solmate** — RolesAuthority (access control)
@@ -100,7 +100,7 @@ Config-independent: `test/unit/deployment/*` (runs once)
 - Avoid introducing constructors in upgradeable implementation contracts.
 
 ## Editing Guardrails
-- Use absolute imports only.
+- Prefer absolute imports; avoid adding new relative imports in new code.
 - Prefer custom errors and `if/revert` checks.
 - Prefer `calldata` for read-only external inputs.
 - Keep function ordering and section headers aligned with the established Cyfrin layout.
@@ -118,6 +118,27 @@ Suggested progression:
 - single folder via `--match-path`
 - `forge build`
 - `npm run test` when cross-network / cross-token behavior may differ
+
+## Recommended Agent Skills & Audit Addons
+- Prefer these skills for routine work in this repo:
+  - `foundry-development-patterns` for targeted build/test loops
+  - `solidity-language-reference` for compiler, inheritance, modifier, and assembly checks
+  - `testing` for focused Foundry regression coverage
+  - `ethereum-security` and `security-reviewer` for vault, auth, upgradeability, and reentrancy review
+  - `gas-optimizer` only when touching hot paths or comparing regressions
+  - `github-api` for PR comments, reviews, and checks in this repository only
+- Optional local audit addons, when available:
+  - Slither for static analysis
+  - Echidna for invariant and property fuzzing on accounting and redemption flows
+  - Mythril as an additional audit pass
+- Preferred operating mode:
+  1. inspect exact contract/test context
+  2. make the smallest safe edit
+  3. run focused Foundry tests
+  4. run `forge build`
+  5. escalate to security tooling only for higher-risk changes
+- Invoke `security-reviewer` when a change touches auth, upgradeability, pause logic, fund movement, flash loans, external call ordering, or redemption/accounting invariants.
+- Invoke `gas-optimizer` when a change touches hot execution paths, introduces assembly/transient storage tradeoffs, or needs before/after gas comparison.
 
 ## Remappings (remappings.txt)
 ```
@@ -154,7 +175,7 @@ All source files follow [Cyfrin development standards](https://www.cyfrin.io/):
 - **Pinned pragma** for concrete contracts (`0.8.34`)
 - **`calldata` over `memory`** for read-only function inputs
 - **`@custom:security-contact security@multipli.com`** on all contracts
-- **Absolute imports only** — no relative `..` paths
+- **Prefer absolute imports** — legacy relative `..` paths may still exist and should be migrated incrementally
 
 ## Known Issues (accepted design tradeoffs)
 1. Yield distribution sandwiching mitigated by staggered `onUnderlyingBalanceUpdate` (21 updates/week)

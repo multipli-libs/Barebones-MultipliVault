@@ -60,9 +60,9 @@ contract VariableVaultFee is Ownable, IVariableVaultFee {
      * @param asset The address of the asset to register
      * @param config The fee configuration for the asset including deposit/withdrawal fees and fee
      * recipient
-     * @custom:throws InvalidAsset if asset address is zero
-     * @custom:throws AssetAlreadyRegistered if asset is already registered
-     * @custom:throws InvalidAssetConfig if configuration is invalid
+     * @custom:throws IVariableVaultFee__InvalidAsset if asset address is zero
+     * @custom:throws IVariableVaultFee__AssetAlreadyRegistered if asset is already registered
+     * @custom:throws IVariableVaultFee__InvalidAssetConfig if configuration is invalid
      * @custom:emits RegisterAsset
      */
     function registerAsset(address asset, AssetFeeConfig memory config) public onlyOwner {
@@ -81,7 +81,7 @@ contract VariableVaultFee is Ownable, IVariableVaultFee {
      * @notice Deregisters an asset and clears its fee configuration
      * @dev Only callable by the contract owner. Resets all fee configuration to zero values.
      * @param asset The address of the asset to deregister
-     * @custom:throws InvalidAsset if asset address is zero or asset is not registered
+     * @custom:throws IVariableVaultFee__InvalidAsset if asset address is zero or asset is not registered
      * @custom:emits DeregisterAsset
      */
     function deregisterAsset(address asset) external onlyOwner {
@@ -100,8 +100,8 @@ contract VariableVaultFee is Ownable, IVariableVaultFee {
      * @dev Only callable by the contract owner. Asset must be already registered.
      * @param asset The address of the asset to update
      * @param config The new fee configuration for the asset
-     * @custom:throws InvalidAsset if asset address is zero or asset is not registered
-     * @custom:throws InvalidAssetConfig if new configuration is invalid
+     * @custom:throws IVariableVaultFee__InvalidAsset if asset address is zero or asset is not registered
+     * @custom:throws IVariableVaultFee__InvalidAssetConfig if new configuration is invalid
      * @custom:emits UpdateAssetFeeConfig
      */
     function updateAssetFeeConfig(address asset, AssetFeeConfig memory config) external onlyOwner {
@@ -135,8 +135,8 @@ contract VariableVaultFee is Ownable, IVariableVaultFee {
      * @param amount The raw amount (without fees included)
      * @param operation The type of operation (DEPOSIT or WITHDRAWAL)
      * @return fee The fee amount to be added to the raw amount
-     * @custom:throws InvalidAsset if asset is zero address or not registered
-     * @custom:throws InsufficientAmount if amount is zero
+     * @custom:throws IVariableVaultFee__InvalidAsset if asset is zero address or not registered
+     * @custom:throws IVariableVaultFee__ZeroAmount if amount is zero
      */
     function feeOnRaw(
         address asset,
@@ -163,8 +163,8 @@ contract VariableVaultFee is Ownable, IVariableVaultFee {
      * @param amount The total amount (including fees)
      * @param operation The type of operation (DEPOSIT or WITHDRAWAL)
      * @return fee The fee portion of the total amount
-     * @custom:throws InvalidAsset if asset is zero address or not registered
-     * @custom:throws InsufficientAmount if amount is zero or if flat fee amount exceeds total
+     * @custom:throws IVariableVaultFee__InvalidAsset if asset is zero address or not registered
+     * @custom:throws IVariableVaultFee__ZeroAmount if amount is zero or if flat fee amount exceeds total
      * assets
      */
     function feeOnTotal(
@@ -193,7 +193,7 @@ contract VariableVaultFee is Ownable, IVariableVaultFee {
      * @notice Validates the asset fee configuration
      * @dev Internal function to ensure fee configuration is valid before setting
      * @param config The asset fee configuration to validate
-     * @custom:throws InvalidAssetConfig if fee recipient is zero address or percentage fees exceed
+     * @custom:throws IVariableVaultFee__InvalidAssetConfig if fee recipient is zero address or percentage fees exceed
      * maximum
      */
     function _validateAssetConfig(AssetFeeConfig memory config) internal pure {
@@ -275,7 +275,7 @@ contract VariableVaultFee is Ownable, IVariableVaultFee {
      * @param assets The total asset amount (including fees)
      * @param feeConfig The fee configuration to apply
      * @return fee The calculated fee portion
-     * @custom:throws InsufficientAmount if flat fee amount exceeds total assets
+     * @custom:throws IVariableVaultFee__ZeroAmount if flat fee amount exceeds total assets
      */
     function _feeOnTotal(
         uint256 assets,
