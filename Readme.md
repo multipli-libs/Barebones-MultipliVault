@@ -179,7 +179,7 @@ The repository includes two types of deployment scripts:
 #### 3.3.1 Avalanche Mainnet - xUSDC (First Vault)
 
 ```bash
-forge script script/deployment/DeployXUSDCAvalancheMainnet.s.sol:DeployXUSDCAvalancheMainnet \
+forge script script/deployment/DeployXUSDCAvalancheAnvil.s.sol:DeployXUSDCAvalancheAnvil \
   --rpc-url avax_mainnet \
   --account <your_avalanche_mainnet_wallet> \
   --sender <your_deployer_address> \
@@ -192,7 +192,7 @@ forge script script/deployment/DeployXUSDCAvalancheMainnet.s.sol:DeployXUSDCAval
 
 ```bash
 # Shares VariableVaultFee with xUSDC
-forge script script/deployment/DeployXBTCBAvalancheMainnet.s.sol:DeployXBTCBAvalancheMainnet \
+forge script script/deployment/DeployXBTCAvalancheMainnet.s.sol:DeployXBTCAvalancheMainnet \
   --rpc-url avax_mainnet \
   --account <your_avalanche_mainnet_wallet> \
   --sender <your_deployer_address> \
@@ -201,23 +201,13 @@ forge script script/deployment/DeployXBTCBAvalancheMainnet.s.sol:DeployXBTCBAval
   -vvvv
 ```
 
-#### 3.3.3 Avalanche Testnet - xUSDC (First Vault)
+#### 3.3.3 Avalanche Testnet - xBTC.b
 
-```bash
-forge script script/deployment/DeployXUSDCAvalancheTestnet.s.sol:DeployXUSDCAvalancheTestnet \
-  --rpc-url avax_testnet \
-  --account <your_avalanche_testnet_wallet> \
-  --sender <your_deployer_address> \
-  --verify \
-  --broadcast \
-  -vvvv
-```
-
-#### 3.3.4 Avalanche Testnet - xBTC.b (Additional Vault)
+> **Note:** No `DeployXUSDCAvalancheTestnet` script exists in this repository; for testnet xUSDC deployments use the deployer flow described above (`DeployXUSDCAvalancheAnvil`) with the testnet RPC URL, or add an equivalent script.
 
 ```bash
 # Shares VariableVaultFee with xUSDC
-forge script script/deployment/DeployXBTCBAvalancheTestnet.s.sol:DeployXBTCBAvalancheTestnet \
+forge script script/deployment/DeployXBTCAvalancheTestnet.s.sol:DeployXBTCAvalancheTestnet \
   --rpc-url avax_testnet \
   --account <your_avalanche_testnet_wallet> \
   --sender <your_deployer_address> \
@@ -233,7 +223,7 @@ forge script script/deployment/DeployXBTCBAvalancheTestnet.s.sol:DeployXBTCBAval
 anvil
 
 # Deploy first vault (xUSDC)
-forge script script/deployment/anvil/DeployXUSDCAnvil.s.sol:DeployXUSDCAnvil \
+forge script script/deployment/DeployXUSDCAvalancheAnvil.s.sol:DeployXUSDCAvalancheAnvil \
   --rpc-url localhost \
   --account <your_local_deployer_wallet> \
   --sender <your_deployer_address> \
@@ -241,7 +231,7 @@ forge script script/deployment/anvil/DeployXUSDCAnvil.s.sol:DeployXUSDCAnvil \
   -vvvv
 
 # Deploy additional vault (xBTC.b) - shares fee contract with xUSDC
-forge script script/deployment/anvil/DeployXBTCBAnvil.s.sol:DeployXBTCBAnvil \
+forge script script/deployment/DeployXBTCAvalancheAnvil.s.sol:DeployXBTCAvalancheAnvil \
   --rpc-url localhost \
   --account <your_local_deployer_wallet> \
   --sender <your_deployer_address> \
@@ -533,18 +523,17 @@ _Figure 2: Complete FlashRedeem execution flow showing all contract interactions
 // Example operator contract implementing IMultipliVaultCallee
 contract PositionUnwinder is IMultipliVaultCallee {
     function onRedemptionFlashLoan(
-        address vault,
+        address initiator,
         address asset,
-        address owner,
-        address receiver,
-        uint256 sharesToReturn,
-        uint256 assetsReceived,
-        bytes calldata data
+        address underlyingAsset,
+        uint256 shares,
+        uint256 underlyingAmount,
+        bytes memory additionalData
     ) external override {
-        // 1. Use received USDC to repay debts on lending protocol
-        // 2. Withdraw xUSDC collateral from lending protocol
-        // 3. Transfer required xUSDC shares back to vault
-        // 4. Keep any excess for the user
+        // 1. Use the flash-loaned underlying tokens to unwind the position
+        // 2. Recover the required xToken shares from the unwound position
+        // 3. Transfer the required xToken shares to the calling vault
+        // 4. Keep any surplus proceeds for the initiator
     }
 }
 ```

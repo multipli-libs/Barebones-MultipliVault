@@ -17,6 +17,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import {
     ERC4626Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {
     PausableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -482,8 +483,10 @@ contract MultipliVault is
         $.totalPendingAssets -= assetsWithFee;
 
         emit RequestCancelled(receiver, shares, assetsWithFee);
-        // Transfer the shares back to the receiver
-        IERC20(address(this)).safeTransfer(receiver, shares);
+        // Transfer the shares back to the receiver via the internal hook so
+        // the movement is not routed through the (pause-gated) public ERC-20
+        // entry point: cancellation must stay live while the vault is paused.
+        _transfer(address(this), receiver, shares);
     }
 
     /**
@@ -504,7 +507,16 @@ contract MultipliVault is
         emit UnderlyingBalanceUpdated($.aggregatedUnderlyingBalances, newAggregatedBalance);
         $.aggregatedUnderlyingBalances = newAggregatedBalance;
 
-        // Calculate new price per share and check for excessive volatility
+        // Calculate new price per share and check for excessive volatility.
+        // With zero shares outstanding (e.g. a fresh vault that already holds
+        // assets), no price can be computed and the percentage change is
+        // meaningless: skip the calculation instead of reverting on
+        // division-by-zero, which would permanently DoS balance updates.
+        if (totalSupply() == 0) {
+            $.lastBlockUpdated = block.number;
+            return;
+        }
+
         // todo: should this be replaced with `convertToAssets(1e6)`?
         uint256 newPricePerShare = totalAssets().mulDiv(DENOMINATOR, totalSupply());
 
@@ -689,7 +701,6 @@ contract MultipliVault is
         uint256 minShares
     )
         public
-        whenNotPaused
         returns (uint256)
     {
         uint256 shares = deposit(assets, receiver);
@@ -771,7 +782,6 @@ contract MultipliVault is
         uint256 maxAssets
     )
         public
-        whenNotPaused
         returns (uint256)
     {
         uint256 assets = mint(shares, receiver);
@@ -783,26 +793,48 @@ contract MultipliVault is
 
     /**
      * @notice Disabled - use requestRedeem instead
-     * @dev This function is disabled to enforce the asynchronous redemption flow
+     * @dev This function is disabled to enforce the asynchronous redemption
+     *      flow. Pause protection is intentionally omitted: the function
+     *      always reverts, so the modifier would be dead weight.
      */
-    function withdraw(uint256, address, address) public override whenNotPaused returns (uint256) {
+    function withdraw(uint256, address, address) public override returns (uint256) {
         revert Errors.UseRequestRedeem();
     }
 
     /**
      * @notice Disabled - use requestRedeem instead
-     * @dev This function is disabled to enforce the asynchronous redemption flow
+     * @dev This function is disabled to enforce the asynchronous redemption
+     *      flow. Pause protection is intentionally omitted: the function
+     *      always reverts, so the modifier would be dead weight.
      */
-    function redeem(uint256, address, address) public override whenNotPaused returns (uint256) {
+    function redeem(uint256, address, address) public override returns (uint256) {
         revert Errors.UseRequestRedeem();
     }
 
     /**
-     * @notice Override the default `_update` function to add pause protection
-     * @dev The _update function is called on all transfers, mints and burns
+     * @notice Blocks share transfers between plain holders while paused
+     * @dev The ERC-20 pause policy of this vault is enforced on the public
+     *      transfer entry points only. Internal movements (mint/burn through
+     *      `_update`, vault-originated internal `_transfer` on fulfillment,
+     *      cancellation, escrow and adminMint/adminBurn) deliberately remain
+     *      live while paused so redemption liveness is preserved in the
+     *      black-swan scenarios the pause exists for.
      */
-    function _update(address from, address to, uint256 value) internal override whenNotPaused {
-        super._update(from, to, value);
+    function transfer(address to, uint256 value) public override(ERC20Upgradeable, IERC20) whenNotPaused returns (bool) {
+        return super.transfer(to, value);
+    }
+
+    /**
+     * @notice Blocks share transfers between plain holders while paused
+     * @dev See `transfer` for the pause policy rationale.
+     */
+    function transferFrom(address from, address to, uint256 value)
+        public
+        override(ERC20Upgradeable, IERC20)
+        whenNotPaused
+        returns (bool)
+    {
+        return super.transferFrom(from, to, value);
     }
 
     /**
@@ -905,6 +937,12 @@ contract MultipliVault is
     function _processRedeemRequest(RedeemParams memory params) internal virtual returns (uint256) {
         require(params.shares > 0, Errors.SharesAmountZero());
         require(params.owner == msg.sender, Errors.NotSharesOwner());
+        // The receiver is stored in the pending-request mapping keyed by the
+        // receiver address. Escrowing shares against address(0) would strand
+        // them forever: neither cancelRedeem (safeTransfer to address(0))
+        // nor fulfillment (_withdraw to address(0)) can ever succeed, and
+        // totalPendingAssets would stay permanently inflated.
+        require(params.receiver != address(0), Errors.InvalidReceiverAddress());
         require(balanceOf(params.owner) >= params.shares, Errors.InsufficientShares());
 
         uint256 assetsWithFee = super.previewRedeem(params.shares);

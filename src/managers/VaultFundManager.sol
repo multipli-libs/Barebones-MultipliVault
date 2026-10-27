@@ -2,11 +2,11 @@
 pragma solidity 0.8.30;
 
 import { MultipliVault } from "../vault/MultipliVault.sol";
+import { FundMovementHelperUpgradeable } from "../base/FundMovementHelperUpgradeable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { console } from "forge-std/console.sol";
 
 /**
  * @title VaultFundManager
@@ -516,6 +516,14 @@ contract VaultFundManager is ReentrancyGuard {
             revert ZeroAmount();
         }
 
+        // Enforce the documented recipient whitelist here as well: the
+        // whitelist maintained by the vault must also gate this transfer
+        // path, otherwise the whitelist is decorative for the main fund
+        // exit route of the manager contract.
+        if (!vault.isRecipientWhitelisted(to)) {
+            revert FundMovementHelperUpgradeable.RecipientNotWhitelisted();
+        }
+
         uint256 balance = IERC20(asset).balanceOf(address(this));
         if (balance < amount) {
             revert InsufficientBalance();
@@ -531,8 +539,10 @@ contract VaultFundManager is ReentrancyGuard {
      *      It's used to transfer native blockchain assets
      *      for operational purposes such as paying gas fees or moving native assets to exchanges.
      *
-     *      Note: This function uses a low-level call which does not revert on failure.
-     *      Consider adding return value checking if needed for your use case.
+     *      Note: This function uses a low-level call and reverts with
+     *      "Transfer failed" if the call itself returns success == false.
+     *      Note that an out-of-gas or extremely gas-hungry receiving
+     *      contract can still leave the call unsuccessful.
      *
      * @param to The address to receive the native funds (must be whitelisted by the vault)
      * @param amount The amount of native assets to transfer (in wei)
@@ -558,6 +568,12 @@ contract VaultFundManager is ReentrancyGuard {
         if (amount == 0) {
             revert ZeroAmount();
         }
+
+        // Enforce the documented recipient whitelist here as well (see removeFunds).
+        if (!vault.isRecipientWhitelisted(to)) {
+            revert FundMovementHelperUpgradeable.RecipientNotWhitelisted();
+        }
+
         uint256 balance = address(this).balance;
         if (balance < amount) {
             revert InsufficientBalance();

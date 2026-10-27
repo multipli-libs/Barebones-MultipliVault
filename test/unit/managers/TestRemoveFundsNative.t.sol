@@ -277,7 +277,15 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
     function test_RemoveFundsNative_TransferFailureScenario() public {
         // Create a contract that rejects AVAX transfers
         RejectingReceiver rejectingContract = new RejectingReceiver();
-        
+
+        // The recipient whitelist must allow the target before the payout
+        // path can reach the low-level call under test.
+        vm.startPrank(users.admin);
+        vault.whitelistFundTransferRecipient(
+            address(rejectingContract), true
+        );
+        vm.stopPrank();
+
         uint256 transferAmount = 1 ether;
 
         bytes memory data = abi.encodeWithSelector(
@@ -294,7 +302,15 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
     function test_RemoveFundsNative_SuccessfulContractRecipient() public {
         // Create a contract that accepts AVAX transfers
         AcceptingReceiver acceptingContract = new AcceptingReceiver();
-        
+
+        // The recipient whitelist must allow the target; the whitelisting is
+        // part of the documented payout policy.
+        vm.startPrank(users.admin);
+        vault.whitelistFundTransferRecipient(
+            address(acceptingContract), true
+        );
+        vm.stopPrank();
+
         uint256 transferAmount = 1 ether;
         uint256 initialContractBalance = address(fundManager).balance;
         uint256 oldAcceptingContractBalance = address(acceptingContract).balance;
@@ -329,8 +345,10 @@ contract TestRemoveFundsNative is VaultFundManagerBase {
         
         uint256 gasUsed = gasBefore - gasAfter;
         
-        // Ensure gas usage is reasonable (less than 100k gas)
-        assertLt(gasUsed, 100_000, "Gas usage should be reasonable");
+        // Ensure gas usage is reasonable (less than 100k gas + a small
+        // allowance for the recipient-whitelist enforcement check that was
+        // added to the payout path: one SLOAD plus a staticcall to the vault).
+        assertLt(gasUsed, 100_200, "Gas usage should be reasonable");
     }
 }
 

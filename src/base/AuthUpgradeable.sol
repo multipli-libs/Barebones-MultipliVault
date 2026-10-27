@@ -3,6 +3,7 @@ pragma solidity 0.8.30;
 
 import { Authority } from "@solmate/auth/Auth.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { Errors } from "../libraries/Errors.sol";
 
 /**
  * @title AuthUpgradeable
@@ -122,8 +123,13 @@ abstract contract AuthUpgradeable is Initializable {
      * @notice Transfers ownership to a new address.
      * @param newOwner The address to receive ownership.
      * @dev Can only be called by an authorized user.
+     * @dev Reverts on the zero address: transferring ownership to address(0)
+     *      would permanently disable the owner-only authorization fallback
+     *      (`user == owner`), making `transferOwnership`/`setAuthority`
+     *      recovery impossible without authority surgery.
      */
     function transferOwnership(address newOwner) public virtual requiresAuth {
+        require(newOwner != address(0), Errors.InvalidOwnerAddress());
         AuthStorage storage $ = _getAuthStorage();
         $.owner = newOwner;
         emit OwnershipTransferred(msg.sender, newOwner);

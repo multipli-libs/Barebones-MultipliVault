@@ -5,6 +5,12 @@ on:
     branches: [master]
   workflow_dispatch:
 
+# Least privilege: the CI job only needs to read the repository. Without an
+# explicit permissions block the GITHUB_TOKEN inherits the repository default,
+# which may include write access.
+permissions:
+  contents: read
+
 env:
   FOUNDRY_PROFILE: default
 
@@ -20,6 +26,19 @@ jobs:
         with:
           submodules: recursive
 
+      # package.json declares @openzeppelin/upgrades-core and solidity-ast;
+      # the upgrade-safety validation invoked by the openzeppelin-foundry
+      # upgrades tooling npx-runs these, and previously `npm test` ran the
+      # suite without them being installed.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -28,6 +47,10 @@ jobs:
       - name: Show Foundry config
         run: forge config
 
+      # The openzeppelin-foundry-upgrades tooling performs upgrade-safety
+      # validation against compiled build-info artifacts; stale artifacts can
+      # make the validation complain about duplicate contracts, so a clean
+      # build is required before tests.
       - name: Clean previous builds
         run: forge clean
 
